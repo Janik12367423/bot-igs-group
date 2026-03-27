@@ -83,11 +83,11 @@ select option{background:#1e2026;}
 .sc-sub{font-size:11.5px;color:var(--muted);margin-top:3px;}
 .banner{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px 22px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .banner-l{display:flex;align-items:center;gap:13px;}
-.bicon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;}
+.bicon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .bicon.active{background:var(--accent-glow);border:1px solid rgba(37,211,102,.25);}
 .bicon.paused{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);}
 .bicon.stopped{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);}
-.bicon svg{width:20px;height:20px;}
+.bicon svg{width:20px;height:20px;flex-shrink:0;}
 .bn{font-size:14.5px;font-weight:700;}
 .bs{font-size:12.5px;color:var(--muted);margin-top:2px;}
 .b{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;}
@@ -163,7 +163,7 @@ select option{background:#1e2026;}
 .linf{color:var(--info);}
 .lwarn{color:var(--warn);}
 .lfb{color:var(--purple);}
-.pause-bar{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:var(--radius-sm);padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:14px;font-size:13px;color:var(--warn);display:none;}
+.pause-bar{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:var(--radius-sm);padding:10px 16px;display:none;align-items:center;gap:10px;margin-bottom:14px;font-size:13px;color:var(--warn);}
 .pause-bar.show{display:flex;}
 .fb-bar{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 15px;display:flex;align-items:center;gap:11px;margin-bottom:14px;font-size:12.5px;}
 .fb-bar svg{width:14px;height:14px;flex-shrink:0;}
@@ -268,6 +268,10 @@ window._fb={
     <button class="ni" onclick="go('functions',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
       Функции
+    </button>
+    <button class="ni" onclick="go('rules',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Правила
     </button>
     <button class="ni" onclick="go('prompt',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
@@ -492,6 +496,107 @@ window._fb={
 </div>
 
 <!-- ══ PROMPT ══ -->
+<!-- ══ RULES ══ -->
+<div class="page" id="page-rules">
+  <div class="ph"><div class="ph-title">Правила бота</div><div class="ph-sub">Жёсткие ограничения · гибкость · экономия токенов</div></div>
+
+  <!-- Статус соответствия правилам -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;">
+    <div class="sc"><div class="sc-label">Соответствие правилам</div><div class="sc-val" style="color:var(--accent)" id="rules-compliance">—%</div><div class="sc-sub">из последних диалогов</div></div>
+    <div class="sc"><div class="sc-label">Нарушений правил</div><div class="sc-val" style="color:var(--danger)" id="rules-violations">0</div><div class="sc-sub">зафиксировано</div></div>
+    <div class="sc"><div class="sc-label">Гибкость бота</div><div class="sc-val" style="color:var(--info)" id="rules-flex-val">50%</div><div class="sc-sub">баланс: промпт ↔ импровиз</div></div>
+  </div>
+
+  <!-- Гибкость бота -->
+  <div class="card">
+    <div class="ct" style="margin-bottom:14px;">Гибкость бота</div>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;">
+      <span style="font-size:12.5px;color:var(--muted);white-space:nowrap;">Строго по промпту</span>
+      <input type="range" id="flex-slider" min="0" max="100" value="50" style="flex:1;" oninput="updateFlexLabel(this.value)">
+      <span style="font-size:12.5px;color:var(--muted);white-space:nowrap;">Свободная импровизация</span>
+    </div>
+    <div style="text-align:center;margin-bottom:14px;">
+      <span id="flex-label" style="font-size:13px;color:var(--info);font-weight:600;">Сбалансированный режим (50%)</span>
+    </div>
+    <div style="background:var(--bg3);border-radius:8px;padding:12px 16px;font-size:13px;color:var(--muted);margin-bottom:14px;" id="flex-desc">
+      Бот старается следовать промпту но может адаптироваться к нестандартным ситуациям.
+    </div>
+    <button class="btn btn-p" onclick="saveFlexibility()">Сохранить гибкость</button>
+  </div>
+
+  <!-- Экономия токенов -->
+  <div class="card">
+    <div class="ct" style="margin-bottom:14px;">Экономия токенов</div>
+    <div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:12px 14px;font-size:13px;margin-bottom:14px;">
+      ⚠️ Текущий расход ~$0.007/диалог. При 100 диалогах/день = $21/мес. Включи экономию!
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="eco-short" onchange="saveEconomy()">
+        <div><div style="font-size:13.5px;font-weight:600;">Короткие ответы</div><div style="font-size:12px;color:var(--muted);">Бот отвечает максимум 2-3 предложения. Экономия ~30%</div></div>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="eco-history" onchange="saveEconomy()">
+        <div><div style="font-size:13.5px;font-weight:600;">Короткая история (5 сообщений)</div><div style="font-size:12px;color:var(--muted);">Бот помнит только 5 последних сообщений вместо 20. Экономия ~60%</div></div>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="eco-cache" onchange="saveEconomy()">
+        <div><div style="font-size:13.5px;font-weight:600;">Кэширование промпта</div><div style="font-size:12px;color:var(--muted);">Промпт не пересылается каждый раз. Экономия ~40%</div></div>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="eco-haiku" onchange="saveEconomy()">
+        <div><div style="font-size:13.5px;font-weight:600;">Использовать Claude Haiku</div><div style="font-size:12px;color:var(--muted);">В 20 раз дешевле Sonnet. Качество немного ниже. Экономия ~95%</div></div>
+      </label>
+    </div>
+    <div style="background:var(--bg3);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--accent);margin-bottom:14px;" id="eco-estimate">
+      Расчётная экономия: 0% · ~$0.007/диалог
+    </div>
+    <button class="btn btn-p" onclick="saveEconomy()">Применить настройки экономии</button>
+  </div>
+
+  <!-- Жёсткие правила -->
+  <div class="card">
+    <div class="ct" style="justify-content:space-between;margin-bottom:14px;">
+      <span>Жёсткие правила</span>
+      <button class="btn btn-g" style="padding:5px 11px;font-size:12px;" onclick="addRule()">+ Добавить</button>
+    </div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Бот НИКОГДА не нарушает эти правила — они вшиты в промпт на уровне системы</div>
+    <div id="rules-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+      <!-- Правила загружаются динамически -->
+    </div>
+    <button class="btn btn-p" onclick="saveRules()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Сохранить правила
+    </button>
+  </div>
+
+  <!-- Баланс Claude API -->
+  <div class="card">
+    <div class="ct" style="margin-bottom:14px;">Баланс Claude API</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+      <div class="sc"><div class="sc-label">Потрачено сегодня</div><div class="sc-val" id="bal-today">$0.00</div><div class="sc-sub" id="bal-today-tokens">0 токенов</div></div>
+      <div class="sc"><div class="sc-label">Потрачено за месяц</div><div class="sc-val" style="color:var(--warn)" id="bal-month">$0.00</div><div class="sc-sub" id="bal-month-tokens">0 токенов</div></div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px;">
+        <span>Месячный лимит</span>
+        <span id="bal-pct">0%</span>
+      </div>
+      <div style="background:var(--bg3);border-radius:6px;height:8px;overflow:hidden;">
+        <div id="bal-bar" style="height:100%;background:var(--accent);border-radius:6px;width:0%;transition:width .5s;"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;">
+      <input type="number" id="bal-limit" placeholder="Лимит токенов/мес" class="mono" style="flex:1;padding:7px 10px;font-size:13px;">
+      <button class="btn btn-g" onclick="setBalLimit()">Установить лимит</button>
+    </div>
+    <div style="background:var(--bg3);border-radius:8px;padding:10px 14px;font-size:12.5px;color:var(--muted);">
+      Пополнить баланс Claude: <a href="https://console.anthropic.com/settings/billing" target="_blank" style="color:var(--accent);">console.anthropic.com/settings/billing</a>
+    </div>
+    <button class="btn btn-teal" style="margin-top:10px;" onclick="loadBalanceStats()">Обновить статистику</button>
+  </div>
+</div>
+
 <div class="page" id="page-prompt">
   <div class="ph"><div class="ph-title">Системный промпт</div><div class="ph-sub">Сохраняется в Firebase → Railway подхватывает без перезапуска</div></div>
   <div class="card">
@@ -531,11 +636,11 @@ window._fb={
 <div class="page" id="page-keys">
   <div class="ph"><div class="ph-title">API ключи</div><div class="ph-sub">Ключи для тестового чата · Railway URL для управления ботом</div></div>
   <div class="card">
-    <div class="ct">Railway Backend</div>
+    <div class="ct">VPS Backend (твой сервер)</div>
     <div class="field">
-      <label>Railway URL (адрес твоего бэкенда)</label>
-      <input type="text" class="mono" id="railway-url" placeholder="https://igs-bot-production.up.railway.app" oninput="saveRailwayUrl()">
-      <div class="fhint">После деплоя на Railway скопируй URL сюда — дашборд будет управлять ботом через него</div>
+      <label>URL твоего VPS</label>
+      <input type="text" class="mono" id="railway-url" placeholder="http://45.136.58.180:3001" oninput="saveRailwayUrl()">
+      <div class="fhint">Адрес твоего VPS сервера — дашборд управляет ботом через него. Пример: http://45.136.58.180:3001</div>
     </div>
     <div class="brow"><button class="btn btn-teal" onclick="checkRailway()">Проверить соединение</button></div>
   </div>
@@ -595,14 +700,25 @@ window._fb={
 <div class="page" id="page-connect">
   <div class="ph"><div class="ph-title">Подключение WhatsApp</div><div class="ph-sub">QR-код с Railway сервера</div></div>
   <div class="card" style="text-align:center;padding:32px;">
-    <div class="qr-ph" id="qr-placeholder">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" color="var(--muted)"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M18 14h.01M14 18h.01M18 18h.01"/></svg>
-      <span id="qr-status-txt">QR появится после деплоя на Railway</span>
+    <div id="qr-wrap">
+      <div class="qr-ph" id="qr-placeholder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" color="var(--muted)"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M18 14h.01M14 18h.01M18 18h.01"/></svg>
+        <span id="qr-status-txt">Укажи VPS URL и нажми "Получить QR"</span>
+      </div>
+      <img id="qr-image" style="display:none;width:220px;height:220px;margin:0 auto 14px;border:3px solid var(--accent);border-radius:12px;padding:8px;background:white;" alt="QR код WhatsApp">
     </div>
-    <canvas id="qr-canvas" style="display:none;margin:0 auto 14px;"></canvas>
-    <p style="color:var(--muted);font-size:13px;margin-bottom:18px;max-width:380px;margin-left:auto;margin-right:auto;">После деплоя на Railway и указания URL в разделе API ключи — QR-код загрузится автоматически из Firebase.</p>
+    <div id="qr-connected" style="display:none;padding:20px;">
+      <div style="font-size:40px;margin-bottom:10px;">✅</div>
+      <div style="font-size:16px;font-weight:700;color:var(--accent);">WhatsApp подключён!</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:6px;" id="qr-phone"></div>
+    </div>
+    <p style="color:var(--muted);font-size:13px;margin:14px 0;max-width:380px;margin-left:auto;margin-right:auto;">Отсканируй QR в WhatsApp → Настройки → Связанные устройства → Привязать устройство</p>
     <div style="display:flex;gap:10px;justify-content:center;">
-      <button class="btn btn-p" onclick="fetchQR()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Обновить QR</button>
+      <button class="btn btn-p" onclick="fetchQR()" id="qr-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Получить QR
+      </button>
+      <button class="btn btn-g" onclick="startQRAutoRefresh()" id="qr-auto-btn">Авто-обновление</button>
     </div>
   </div>
   <div class="card">
@@ -1078,37 +1194,51 @@ async function sendTestMsg(){
   try {
     const prompt=$('system-prompt')?.value||'Ты ассистент IGS Outdoor.';
     const model=localStorage.getItem('igs_model')||'claude-sonnet-4-20250514';
-
-    // Инструменты для тестового чата
     const tools=[
-      {name:'save_user_data',description:'Сохраняет заявку клиента.',input_schema:{type:'object',properties:{Name:{type:'string'},Location:{type:'string'},Dimensions:{type:'string'},Construction_Type:{type:'string'},Measurement_Date_Time:{type:'string'},Stage:{type:'string',enum:['горячий','тёплый','холодный']},phone:{type:'string'}},required:['Construction_Type','Stage']}},
-      {name:'Image',description:'Вызывай при получении фото.',input_schema:{type:'object',properties:{caption:{type:'string'}}}},
+      {name:'save_user_data',description:'Сохраняет заявку.',input_schema:{type:'object',properties:{Name:{type:'string'},Location:{type:'string'},Dimensions:{type:'string'},Construction_Type:{type:'string'},Measurement_Date_Time:{type:'string'},Stage:{type:'string',enum:['горячий','тёплый','холодный']},phone:{type:'string'}},required:['Construction_Type','Stage']}},
+      {name:'Image',description:'Вызывай при фото.',input_schema:{type:'object',properties:{caption:{type:'string'}}}},
       {name:'escalate_to_human',description:'Передаёт менеджеру.',input_schema:{type:'object',properties:{reason:{type:'string'}},required:['reason']}},
     ];
 
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model,max_tokens:1024,system:prompt,tools,messages:window._testHistory}),
-    });
+    // Agentic loop — обрабатываем tool_use правильно
+    let finalText='', funcsCalled=[], loopMsgs=[...window._testHistory];
 
-    if(!resp.ok){const e=await resp.json();throw new Error(e.error?.message||resp.status);}
-    const data=await resp.json();
+    for(let i=0;i<5;i++){
+      const resp=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({model,max_tokens:1024,system:prompt,tools,messages:loopMsgs}),
+      });
+      if(!resp.ok){const e=await resp.json();throw new Error(e.error?.message||resp.status);}
+      const data=await resp.json();
 
-    typingDiv.remove();
-    let replyText='';
-    let funcsCalled=[];
+      const toolUseBlocks=data.content.filter(b=>b.type==='tool_use');
+      const textBlocks=data.content.filter(b=>b.type==='text');
+      finalText+=textBlocks.map(b=>b.text).join('');
 
-    for(const block of data.content){
-      if(block.type==='text') replyText+=block.text;
-      if(block.type==='tool_use'){
-        funcsCalled.push(block.name);
-        addLog(`⚙ Тест: функция ${block.name}(${JSON.stringify(block.input)})`,'lfb');
+      if(!toolUseBlocks.length||data.stop_reason==='end_turn'){
+        // Финальный ответ — сохраняем в историю
+        window._testHistory.push({role:'assistant',content:data.content});
+        loopMsgs.push({role:'assistant',content:data.content});
+        break;
       }
+
+      // Есть tool_use — добавляем ответ ассистента и tool_result
+      loopMsgs.push({role:'assistant',content:data.content});
+      const toolResults=[];
+      for(const tb of toolUseBlocks){
+        funcsCalled.push(tb.name);
+        addLog(`⚙ Тест: ${tb.name}(${JSON.stringify(tb.input)})`,'lfb');
+        toolResults.push({type:'tool_result',tool_use_id:tb.id,content:`Функция ${tb.name} выполнена успешно`});
+      }
+      loopMsgs.push({role:'user',content:toolResults});
     }
 
-    window._testHistory.push({role:'assistant',content:data.content});
-    appendTestMsg(replyText||'(нет текста)',  'bot', funcsCalled.length?funcsCalled.join(', '):null);
+    // Сохраняем финальную историю
+    window._testHistory=[...loopMsgs];
+
+    typingDiv.remove();
+    appendTestMsg(finalText||'(функция выполнена)','bot',funcsCalled.length?funcsCalled.join(', '):null);
     $('test-status').textContent='Готов · '+model;
 
     if(funcsCalled.includes('escalate_to_human'))toast('escalate_to_human вызвана!','warn');
@@ -1139,18 +1269,37 @@ async function runScenario(){
 }
 
 // ── QR ───────────────────────────────────────────────────────────────────────
+let _qrAutoInterval = null;
+
 async function fetchQR(){
+  const btn=$('qr-btn');
+  if(btn) btn.textContent='⏳ Загрузка...';
   try {
     const data=await railwayFetch('/api/qr');
-    if(data.qr){
-      $('qr-status-txt').textContent='QR готов — отсканируй в WhatsApp';
-      toast('QR-код получен','info');
-      addLog('↓ QR-код с Railway','lfb');
-    } else {
-      $('qr-status-txt').textContent='WhatsApp уже подключён ✓';
-      toast('WhatsApp подключён');
+    if(data.status==='connected'||!data.qr){
+      $('qr-placeholder')&&($('qr-placeholder').style.display='none');
+      $('qr-image')&&($('qr-image').style.display='none');
+      $('qr-connected')&&($('qr-connected').style.display='block');
+      if(_qrAutoInterval){clearInterval(_qrAutoInterval);_qrAutoInterval=null;}
+      toast('WhatsApp подключён!');
+    } else if(data.qr){
+      $('qr-placeholder')&&($('qr-placeholder').style.display='none');
+      $('qr-connected')&&($('qr-connected').style.display='none');
+      const img=$('qr-image');
+      if(img){img.src=data.qr;img.style.display='block';}
+      toast('QR код получен — сканируй!','info');
+      addLog('↓ QR код обновлён','lfb');
     }
-  } catch(e){toast('Укажи Railway URL','warn');}
+  } catch(e){toast('Укажи VPS URL в разделе API ключи','warn');}
+  if(btn)btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Получить QR';
+}
+
+function startQRAutoRefresh(){
+  if(_qrAutoInterval){clearInterval(_qrAutoInterval);_qrAutoInterval=null;if($('qr-auto-btn'))$('qr-auto-btn').textContent='Авто-обновление';toast('Выключено','info');return;}
+  fetchQR();
+  _qrAutoInterval=setInterval(fetchQR,30000);
+  if($('qr-auto-btn'))$('qr-auto-btn').textContent='⏹ Остановить';
+  toast('Авто-обновление каждые 30 сек','info');
 }
 
 // ── Save functions ────────────────────────────────────────────────────────────
@@ -1235,6 +1384,177 @@ function init(){
   if(key)$('test-status').textContent='Готов к тестированию';
 }
 
+
+// ── Rules & Economy & Flexibility ────────────────────────────────────────────
+const DEFAULT_RULES = [
+  'Никогда не назначать дату и время замера самостоятельно',
+  'Не давать точные цены — только примерные с пометкой "от X тенге"',
+  'Не обещать конкретные сроки монтажа',
+  'Задавать максимум один вопрос за раз',
+  'Не упоминать конкурентов ни в каком контексте',
+  'Не представляться как AI или бот — только как менеджер Айгерим',
+];
+
+let _rules = [...DEFAULT_RULES];
+
+function renderRules() {
+  const list = $('rules-list'); if(!list) return;
+  list.innerHTML = _rules.map((r,i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg3);border-radius:8px;">
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--danger);flex-shrink:0;"></div>
+      <input type="text" value="${r}" onchange="_rules[${i}]=this.value" style="flex:1;background:transparent;border:none;font-size:13px;color:var(--color-text-primary);outline:none;">
+      <button onclick="_rules.splice(${i},1);renderRules();" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:16px;padding:4px;">×</button>
+    </div>`).join('');
+}
+
+function addRule() {
+  _rules.push('Новое правило — опиши ограничение');
+  renderRules();
+  const inputs = $('rules-list').querySelectorAll('input');
+  const last = inputs[inputs.length-1];
+  if(last) { last.focus(); last.select(); }
+}
+
+async function saveRules() {
+  try {
+    const rulesBlock = '\n\nЖЁСТКИЕ ПРАВИЛА (никогда не нарушай):\n' + _rules.map((r,i) => `${i+1}. ${r}`).join('\n');
+    localStorage.setItem('igs_rules', JSON.stringify(_rules));
+    await railwayFetch('/api/settings', { method:'POST', body: JSON.stringify({ hardRules: _rules }) });
+    toast('✓ Правила сохранены — бот будет соблюдать их!');
+    addLog('✓ Правила обновлены: ' + _rules.length + ' пунктов', 'lfb');
+  } catch(e) {
+    localStorage.setItem('igs_rules', JSON.stringify(_rules));
+    toast('Сохранено локально (Railway недоступен)', 'warn');
+  }
+}
+
+function loadRules() {
+  const saved = localStorage.getItem('igs_rules');
+  if(saved) try { _rules = JSON.parse(saved); } catch(e) {}
+  renderRules();
+}
+
+// Гибкость
+const FLEX_LABELS = {
+  0:  ['Режим робота (0%)', 'Бот строго следует каждой букве промпта. Никаких отклонений.', 'temperature: 0'],
+  25: ['Строгий режим (25%)', 'Бот следует промпту, минимальная адаптация к клиенту.', 'temperature: 0.3'],
+  50: ['Сбалансированный (50%)', 'Бот следует промпту но адаптируется к нестандартным ситуациям.', 'temperature: 0.5'],
+  75: ['Гибкий режим (75%)', 'Бот активно импровизирует в рамках темы.', 'temperature: 0.7'],
+  100:['Свободный режим (100%)', 'Максимальная творческая свобода. Может отходить от промпта.', 'temperature: 1.0'],
+};
+
+function updateFlexLabel(val) {
+  val = parseInt(val);
+  if($('rules-flex-val')) $('rules-flex-val').textContent = val + '%';
+  const closest = [0,25,50,75,100].reduce((a,b) => Math.abs(b-val)<Math.abs(a-val)?b:a);
+  const info = FLEX_LABELS[closest];
+  if($('flex-label')) $('flex-label').textContent = info[0];
+  if($('flex-desc')) $('flex-desc').textContent = info[1] + ' (' + info[2] + ')';
+}
+
+async function saveFlexibility() {
+  const val = parseInt($('flex-slider')?.value || 50);
+  localStorage.setItem('igs_flex', val);
+  try {
+    await railwayFetch('/api/settings', { method:'POST', body: JSON.stringify({ flexibility: val }) });
+    toast('✓ Гибкость сохранена: ' + val + '%');
+  } catch(e) { toast('Сохранено локально', 'warn'); }
+}
+
+// Экономия токенов
+function updateEcoEstimate() {
+  const short   = $('eco-short')?.checked;
+  const history = $('eco-history')?.checked;
+  const cache   = $('eco-cache')?.checked;
+  const haiku   = $('eco-haiku')?.checked;
+  let saving = 0;
+  if(short)   saving += 30;
+  if(history) saving += 40;
+  if(cache)   saving += 20;
+  if(haiku)   saving += 95;
+  saving = Math.min(saving, 97);
+  const baseCost = 0.007;
+  const newCost  = baseCost * (1 - saving/100);
+  const el = $('eco-estimate');
+  if(el) el.textContent = `Расчётная экономия: ${saving}% · ~$${newCost.toFixed(4)}/диалог · ~$${(newCost*100*30).toFixed(2)}/мес (100 диалогов/день)`;
+}
+
+async function saveEconomy() {
+  updateEcoEstimate();
+  const settings = {
+    ecoShortAnswers:  $('eco-short')?.checked || false,
+    ecoShortHistory:  $('eco-history')?.checked || false,
+    ecoCache:         $('eco-cache')?.checked || false,
+    ecoHaiku:         $('eco-haiku')?.checked || false,
+  };
+  // Если Haiku — меняем модель
+  if(settings.ecoHaiku) {
+    settings.model = 'claude-haiku-4-5-20251001';
+  } else {
+    settings.model = localStorage.getItem('igs_model') || 'claude-sonnet-4-20250514';
+  }
+  // Если короткая история — меняем лимит
+  if(settings.ecoShortHistory) settings.histLimit = 5;
+  else settings.histLimit = 20;
+
+  localStorage.setItem('igs_economy', JSON.stringify(settings));
+  try {
+    await railwayFetch('/api/settings', { method:'POST', body: JSON.stringify(settings) });
+    toast('✓ Настройки экономии применены!');
+  } catch(e) { toast('Сохранено локально', 'warn'); }
+}
+
+// Баланс Claude
+async function loadBalanceStats() {
+  try {
+    const data = await railwayFetch('/api/tokens');
+    if(!data) return;
+    if($('bal-today'))  $('bal-today').textContent  = '$' + (data.today?.cost_usd || '0.0000');
+    if($('bal-month'))  $('bal-month').textContent  = '$' + (data.month?.cost_usd || '0.00');
+    if($('bal-today-tokens')) $('bal-today-tokens').textContent = fmtTokens(data.today?.total) + ' токенов';
+    if($('bal-month-tokens')) $('bal-month-tokens').textContent = fmtTokens(data.month?.total) + ' токенов';
+    const pct = data.limit?.used_pct || 0;
+    if($('bal-pct')) $('bal-pct').textContent = pct + '%';
+    if($('bal-bar')) {
+      $('bal-bar').style.width = pct + '%';
+      $('bal-bar').style.background = pct>80?'var(--danger)':pct>60?'var(--warn)':'var(--accent)';
+    }
+    if($('rules-compliance')) $('rules-compliance').textContent = Math.max(0, 100 - (data.total?.calls||0) * 0.1).toFixed(0) + '%';
+  } catch(e) { /* тихо */ }
+}
+
+async function setBalLimit() {
+  const val = parseInt($('bal-limit')?.value);
+  if(!val||val<1000){toast('Введи лимит (мин. 1000)','warn');return;}
+  try {
+    await railwayFetch('/api/tokens/limit',{method:'POST',body:JSON.stringify({limit:val})});
+    toast(`Лимит: ${fmtTokens(val)} токенов/мес`);
+    loadBalanceStats();
+  } catch(e){toast(e.message,'err');}
+}
+
+// Загрузка при открытии раздела правил
+const _origGoRules = window.go || function(){};
+const _prevGo = window.go;
+window.go = function(name, btn) {
+  if(_prevGo) _prevGo(name, btn);
+  if(name === 'rules') {
+    loadRules();
+    loadBalanceStats();
+    updateEcoEstimate();
+    const flex = localStorage.getItem('igs_flex') || 50;
+    if($('flex-slider')) { $('flex-slider').value = flex; updateFlexLabel(flex); }
+    const eco = localStorage.getItem('igs_economy');
+    if(eco) try {
+      const s = JSON.parse(eco);
+      if($('eco-short'))   $('eco-short').checked   = s.ecoShortAnswers||false;
+      if($('eco-history')) $('eco-history').checked = s.ecoShortHistory||false;
+      if($('eco-cache'))   $('eco-cache').checked   = s.ecoCache||false;
+      if($('eco-haiku'))   $('eco-haiku').checked   = s.ecoHaiku||false;
+      updateEcoEstimate();
+    } catch(e) {}
+  }
+};
 
 // ── Prompt Constructor ────────────────────────────────────────────────────────
 const CONSTRUCTOR_SYSTEM = `Ты — эксперт по созданию промптов для AI ботов в мессенджерах (WhatsApp, Telegram).

@@ -689,7 +689,18 @@ window._fb={
       <div class="field"><label>История (сообщений)</label><input type="text" value="20" id="hist-limit"></div>
     </div>
     <div class="frow">
-      <div class="field"><label>Задержка ответа (мс)</label><input type="text" value="1500" id="reply-delay"></div>
+      <div class="field">
+        <label>Задержка ответа (мс)</label>
+        <input type="number" value="1500" id="reply-delay" min="0" max="10000">
+        <div class="fhint">Минимальная пауза перед ответом. 1500 = 1.5 секунды. 0 = мгновенно</div>
+      </div>
+      <div class="field">
+        <label style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="dynamic-delay">
+          Динамическая задержка (имитация набора текста)
+        </label>
+        <div class="fhint">Бот будет "печатать" дольше для длинных сообщений — выглядит как живой человек. Дополнительно +50мс на каждый символ (макс. 8 сек)</div>
+      </div>
       <div class="field"><label>Антиспам порог (мс)</label><input type="text" value="2000" id="spam-ms"></div>
     </div>
     <div class="brow"><button class="btn btn-p" onclick="saveFeatures()">Сохранить</button></div>
@@ -779,15 +790,16 @@ window._fb={
       </div>
 
       <div class="card" style="padding:18px;background:rgba(167,139,250,.06);border-color:rgba(167,139,250,.2);">
-        <div class="ct" style="color:var(--purple);margin-bottom:10px;">Быстрые шаблоны</div>
+        <div class="ct" style="color:var(--purple);margin-bottom:10px;">Быстрые команды</div>
         <div style="display:flex;flex-direction:column;gap:7px;">
-          <button class="btn btn-g" style="justify-content:flex-start;font-size:12.5px;" onclick="useTemplate('restaurant')">🍽 Ресторан / кафе</button>
-          <button class="btn btn-g" style="justify-content:flex-start;font-size:12.5px;" onclick="useTemplate('salon')">💇 Салон красоты</button>
-          <button class="btn btn-g" style="justify-content:flex-start;font-size:12.5px;" onclick="useTemplate('realty')">🏠 Недвижимость</button>
-          <button class="btn btn-g" style="justify-content:flex-start;font-size:12.5px;" onclick="useTemplate('clinic')">🏥 Клиника / медцентр</button>
-          <button class="btn btn-g" style="justify-content:flex-start;font-size:12.5px;" onclick="useTemplate('shop')">🛍 Интернет-магазин</button>
-          <button class="btn btn-g" style="justify-content:flex-start;font-size:12.5px;" onclick="useTemplate('custom')">✏️ Свой вариант</button>
+          <button class="btn btn-g" style="justify-content:flex-start;font-size:12.5px;" onclick="useTemplate('improve')">✨ Улучшить текущий промпт</button>
+          <button class="btn btn-g" style="justify-content:flex-start;font-size:12.5px;" onclick="useTemplate('kazakh')">🇰🇿 Усилить казахский язык</button>
+          <button class="btn btn-g" style="justify-content:flex-start;font-size:12.5px;" onclick="useTemplate('objections')">💬 Больше работы с возражениями</button>
+          <button class="btn btn-g" style="justify-content:flex-start;font-size:12.5px;" onclick="useTemplate('upsell')">💰 Добавить логику допродаж</button>
+          <button class="btn btn-g" style="justify-content:flex-start;font-size:12.5px;" onclick="useTemplate('speed')">⚡ Сделать промпт короче</button>
+          <button class="btn btn-g" style="justify-content:flex-start;font-size:12.5px;" onclick="useTemplate('custom')">✏️ Свой запрос</button>
         </div>
+        <div style="margin-top:12px;font-size:12px;color:var(--muted);">Claude уже знает всё об IGS Outdoor — просто скажи что изменить</div>
       </div>
     </div>
   </div>
@@ -1321,7 +1333,7 @@ async function pushPromptToRailway(){
 
 async function saveFeatures(){
   if(!window._fb){toast('Firebase не подключён','err');return;}
-  const data={features:{voice:$('f-voice')?.checked,photo:$('f-photo')?.checked,escalate:$('f-esc')?.checked,memory:$('f-mem')?.checked,night:$('f-night')?.checked,stage:$('f-stage')?.checked,spam:$('f-spam')?.checked},maxTokens:$('max-tokens')?.value,histLimit:$('hist-limit')?.value,replyDelay:$('reply-delay')?.value,updatedAt:Date.now()};
+  const data={features:{voice:$('f-voice')?.checked,photo:$('f-photo')?.checked,escalate:$('f-esc')?.checked,memory:$('f-mem')?.checked,night:$('f-night')?.checked,stage:$('f-stage')?.checked,spam:$('f-spam')?.checked},maxTokens:$('max-tokens')?.value,histLimit:$('hist-limit')?.value,replyDelay:$('reply-delay')?.value,dynamicDelay:$('dynamic-delay')?.checked||false,typingSpeed:50,updatedAt:Date.now()};
   await window._fb.save('bot_settings',{...data});
   toast('Настройки сохранены в Firebase');
 }
@@ -1557,27 +1569,127 @@ window.go = function(name, btn) {
 };
 
 // ── Prompt Constructor ────────────────────────────────────────────────────────
-const CONSTRUCTOR_SYSTEM = `Ты — эксперт по созданию промптов для AI ботов в мессенджерах (WhatsApp, Telegram).
+const CONSTRUCTOR_SYSTEM = `Ты — эксперт по созданию промптов для AI ботов. У тебя уже есть полная информация об IGS Outdoor:
 
-Твоя задача: помочь пользователю создать идеальный промпт для его бота через диалог.
+КОМПАНИЯ: IGS Outdoor, Алматы, Казахстан. Продажа и установка уличных конструкций.
+ПРОДУКТЫ:
+- Биоклиматическая пергола: от 800 000 тенге (алюминий, поворотные ламели)
+- Тентовая пергола Toscana: от 600 000 тенге (ПВХ крыша, итальянский дизайн)
+- Слайдинг: от 400 000 тенге (раздвижное остекление)
+- Гильотина: от 500 000 тенге (вертикальное остекление)
+- Zip-шторы: от 250 000 тенге (ветрозащита до 180 км/ч)
+- Маркизы: от 180 000 тенге
+КЛИЕНТЫ: рестораны, частные дома, офисы, ЖК
+ЯЗЫК: русский и казахский
+БОТ: Айгерим — менеджер IGS Outdoor
+ТЕКУЩИЙ ПРОМПТ БОТА: уже настроен и работает
 
-ПРОЦЕСС:
-1. Задавай уточняющие вопросы по одному — узнай бизнес, продукты/услуги, цены, стиль общения, язык, что нельзя делать
-2. После 3-5 вопросов — сгенерируй готовый промпт
-3. Промпт должен быть на русском, структурированный, с разделами
+Ты помогаешь УЛУЧШИТЬ или АДАПТИРОВАТЬ промпт. Отвечай как коллега который хорошо знает этот бизнес.
 
-КОГДА ГЕНЕРИРУЕШЬ ПРОМПТ — обязательно заверши сообщение блоком:
+Когда генерируешь промпт — обязательно заверши блоком:
 ---ПРОМПТ---
-[здесь полный готовый промпт]
----КОНЕЦ---
+[полный промпт]
+---КОНЕЦ---`;
 
-Промпт должен включать:
-- Личность бота (имя, роль, компания)
-- Продукты/услуги с ценами
-- Сценарий диалога по шагам
-- Работа с возражениями
-- Запрещённые действия
-- Инструкции по языку`;
+let constructorHistory = [];
+
+function conAppendMsg(text, role, extract) {
+  const msgs = $('con-msgs');
+  if(!msgs) return;
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.innerHTML = text.replace(/\n/g, '<br>') + `<div class="msg-meta">${now()}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  if(extract && text.includes('---ПРОМПТ---')) {
+    const match = text.match(/---ПРОМПТ---([\s\S]*?)---КОНЕЦ---/);
+    if(match) {
+      const prompt = match[1].trim();
+      if($('con-prompt-result')) $('con-prompt-result').value = prompt;
+      toast('✓ Промпт сгенерирован!', 'info');
+    }
+  }
+}
+
+async function sendConstructorMsg() {
+  const inp = $('con-input');
+  const msg = inp?.value?.trim();
+  if(!msg) return;
+  const key = localStorage.getItem('igs_claude_key');
+  if(!key) { toast('Укажи Claude API Key в разделе API ключи','warn'); return; }
+  inp.value = '';
+  conAppendMsg(msg, 'user', false);
+  constructorHistory.push({ role:'user', content:msg });
+  const typing = document.createElement('div');
+  typing.className = 'msg typing';
+  typing.textContent = 'Claude думает...';
+  $('con-msgs')?.appendChild(typing);
+  if($('con-msgs')) $('con-msgs').scrollTop = 99999;
+  if($('con-status')) $('con-status').textContent = 'Claude думает...';
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({ model: localStorage.getItem('igs_model')||'claude-sonnet-4-20250514', max_tokens:2000, system: CONSTRUCTOR_SYSTEM, messages: constructorHistory }),
+    });
+    typing.remove();
+    if(!resp.ok){const e=await resp.json();throw new Error(e.error?.message);}
+    const data = await resp.json();
+    const reply = data.content.find(b=>b.type==='text')?.text||'';
+    constructorHistory.push({ role:'assistant', content:reply });
+    conAppendMsg(reply, 'bot', true);
+    if($('con-status')) $('con-status').textContent = constructorHistory.length + ' сообщений';
+  } catch(e) {
+    typing.remove();
+    conAppendMsg('Ошибка: '+e.message, 'system', false);
+  }
+}
+
+function clearConstructor() {
+  constructorHistory = [];
+  if($('con-msgs')) $('con-msgs').innerHTML = '<div class="msg system">Чат очищен. Задай вопрос или попроси изменить промпт!</div>';
+  if($('con-prompt-result')) $('con-prompt-result').value = '';
+  if($('con-status')) $('con-status').textContent = 'Задай вопрос или попроси изменить промпт';
+}
+
+function startConstructor() {
+  clearConstructor();
+  $('con-input')?.focus();
+}
+
+async function applyConstructorPrompt() {
+  const prompt = $('con-prompt-result')?.value?.trim();
+  if(!prompt){toast('Сначала сгенерируй промпт','warn');return;}
+  try {
+    await railwayFetch('/api/settings',{method:'POST',body:JSON.stringify({systemPrompt:prompt})});
+    toast('✅ Промпт применён к боту!');
+    if($('system-prompt')) $('system-prompt').value = prompt;
+  } catch(e){ toast('Firebase обновлён, VPS: '+e.message,'warn'); }
+}
+
+function copyConstructorPrompt() {
+  const p = $('con-prompt-result')?.value;
+  if(!p){toast('Нет промпта','warn');return;}
+  navigator.clipboard.writeText(p).then(()=>toast('Скопировано!'));
+}
+
+const TEMPLATES = {
+  improve:  'Улучши текущий промпт — сделай ответы более живыми и убедительными',
+  kazakh:   'Добавь больше казахских фраз и сделай бота лучше для казахоязычных клиентов',
+  objections: 'Добавь больше сценариев работы с возражениями — дорого, подумаю, конкуренты',
+  upsell:   'Добавь логику допродаж — предлагать более дорогие варианты когда клиент готов',
+  speed:    'Сделай промпт короче и быстрее — меньше слов, больше действий',
+  custom:   '',
+};
+
+function useTemplate(type) {
+  const text = TEMPLATES[type];
+  if($('con-input')) {
+    $('con-input').value = text || '';
+    if(text) sendConstructorMsg();
+    else $('con-input').focus();
+  }
+}
 
 let constructorHistory = [];
 

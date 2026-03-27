@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IGS Bot — Панель управления</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0f11;--bg2:#16181c;--bg3:#1e2026;--bg4:#252830;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#f0f0f0;--muted:#6b7280;
+  --accent:#25d366;--accent-glow:rgba(37,211,102,0.15);
+  --danger:#ef4444;--warn:#f59e0b;--info:#60a5fa;
+  --purple:#a78bfa;--purple-glow:rgba(167,139,250,0.15);
+  --teal:#2dd4bf;--teal-glow:rgba(45,212,191,0.15);
+  --radius:12px;--radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;}
+.shell{display:grid;grid-template-columns:250px 1fr;min-height:100vh;}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.logo{padding:20px 20px 18px;border-bottom:1px solid var(--border);}
+.logo-mark{width:34px;height:34px;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:9px;}
+.logo-mark svg{width:18px;height:18px;}
+.logo-title{font-size:13.5px;font-weight:700;}
+.logo-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.nav{padding:14px 10px;flex:1;}
+.ns{font-size:9.5px;font-weight:700;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;padding:0 10px;margin:16px 0 5px;}
+.ns:first-child{margin-top:0;}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);transition:all .15s;border:none;background:none;width:100%;text-align:left;}
+.ni:hover{background:var(--bg3);color:var(--text);}
+.ni.active{background:var(--accent-glow);color:var(--accent);}
+.ni svg{width:15px;height:15px;flex-shrink:0;}
+.ni-badge{margin-left:auto;padding:1px 7px;border-radius:20px;font-size:10.5px;font-weight:700;}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--muted);margin-left:auto;flex-shrink:0;}
+.sdot.on{background:var(--accent);box-shadow:0 0 5px var(--accent);animation:pulse 2s infinite;}
+.sdot.off{background:var(--danger);}
+.sdot.pause{background:var(--warn);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.sf{padding:14px 18px;border-top:1px solid var(--border);font-size:11.5px;color:var(--muted);}
+.fb-row{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:11px;}
+.fb-dot{width:5px;height:5px;border-radius:50%;background:var(--danger);}
+.fb-dot.on{background:var(--accent);box-shadow:0 0 4px var(--accent);}
+.main{padding:32px 36px;overflow-y:auto;}
+.page{display:none;}
+.page.active{display:block;animation:fi .18s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.ph{margin-bottom:24px;}
+.ph-title{font-size:21px;font-weight:700;margin-bottom:3px;}
+.ph-sub{font-size:13px;color:var(--muted);}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:14px;}
+.ct{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+.ct svg{width:13px;height:13px;}
+label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;}
+input[type=text],input[type=password],select,textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'Manrope',sans-serif;font-size:13.5px;padding:9px 13px;outline:none;transition:border-color .15s;}
+input[type=text]:focus,input[type=password]:focus,select:focus,textarea:focus{border-color:var(--accent);}
+.mono{font-family:'JetBrains Mono',monospace;font-size:12.5px;}
+textarea{resize:vertical;min-height:180px;line-height:1.65;}
+.field{margin-bottom:16px;}
+.fhint{font-size:11.5px;color:var(--muted);margin-top:4px;}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+select option{background:#1e2026;}
+.ccount{font-size:11px;color:var(--muted);text-align:right;margin-top:4px;}
+.divider{height:1px;background:var(--border);margin:18px 0;}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:var(--radius-sm);font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;}
+.btn svg{width:14px;height:14px;}
+.btn-p{background:var(--accent);color:#000;}
+.btn-p:hover{background:#1fbe5a;}
+.btn-g{background:var(--bg3);color:var(--text);border:1px solid var(--border);}
+.btn-g:hover{border-color:var(--border2);}
+.btn-d{background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2);}
+.btn-d:hover{background:rgba(239,68,68,.18);}
+.btn-warn{background:rgba(245,158,11,.1);color:var(--warn);border:1px solid rgba(245,158,11,.2);}
+.btn-warn:hover{background:rgba(245,158,11,.18);}
+.btn-purple{background:var(--purple-glow);color:var(--purple);border:1px solid rgba(167,139,250,.2);}
+.btn-teal{background:var(--teal-glow);color:var(--teal);border:1px solid rgba(45,212,191,.2);}
+.brow{display:flex;gap:9px;margin-top:16px;flex-wrap:wrap;}
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.sc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
+.sc-label{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px;}
+.sc-val{font-size:26px;font-weight:700;line-height:1;}
+.sc-sub{font-size:11.5px;color:var(--muted);margin-top:3px;}
+.banner{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px 22px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.banner-l{display:flex;align-items:center;gap:13px;}
+.bicon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;}
+.bicon.active{background:var(--accent-glow);border:1px solid rgba(37,211,102,.25);}
+.bicon.paused{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);}
+.bicon.stopped{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);}
+.bicon svg{width:20px;height:20px;}
+.bn{font-size:14.5px;font-weight:700;}
+.bs{font-size:12.5px;color:var(--muted);margin-top:2px;}
+.b{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+.b-g{background:rgba(37,211,102,.12);color:var(--accent);}
+.b-r{background:rgba(239,68,68,.12);color:var(--danger);}
+.b-y{background:rgba(245,158,11,.12);color:var(--warn);}
+.b-b{background:rgba(96,165,250,.12);color:var(--info);}
+.b-p{background:var(--purple-glow);color:var(--purple);}
+.b-t{background:var(--teal-glow);color:var(--teal);}
+.tr{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border);}
+.tr:last-child{border-bottom:none;}
+.ti{flex:1;}
+.tn{font-size:13.5px;font-weight:500;}
+.td{font-size:12px;color:var(--muted);margin-top:1px;}
+.tog{position:relative;width:38px;height:21px;flex-shrink:0;margin-left:14px;}
+.tog input{opacity:0;width:0;height:0;}
+.ts-{position:absolute;inset:0;background:var(--bg3);border:1px solid var(--border);border-radius:20px;cursor:pointer;transition:.2s;}
+.ts-::before{content:'';position:absolute;width:13px;height:13px;left:3px;top:50%;transform:translateY(-50%);background:var(--muted);border-radius:50%;transition:.2s;}
+.tog input:checked+.ts-{background:var(--accent-glow);border-color:var(--accent);}
+.tog input:checked+.ts-::before{transform:translate(17px,-50%);background:var(--accent);}
+.fc{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:10px;}
+.fc.enabled{border-left:3px solid var(--accent);}
+.fc.disabled{border-left:3px solid var(--muted);opacity:.55;}
+.fc.escalate{border-left:3px solid var(--warn);}
+.fh{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.fname{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500;flex:1;}
+.fpb{font-size:11px;background:var(--purple-glow);color:var(--purple);padding:2px 9px;border-radius:20px;font-weight:700;}
+.fdesc{font-size:12.5px;color:var(--muted);line-height:1.6;}
+.fpl{margin-top:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;}
+.fpr{display:grid;grid-template-columns:160px 75px 1fr;gap:10px;padding:9px 13px;border-bottom:1px solid var(--border);font-size:12px;align-items:center;}
+.fpr:last-child{border-bottom:none;}
+.fpr.hd{background:var(--bg3);font-weight:700;color:var(--muted);font-size:10.5px;text-transform:uppercase;}
+.pn{font-family:'JetBrains Mono',monospace;color:var(--purple);}
+.pt{color:var(--warn);font-family:'JetBrains Mono',monospace;font-size:10.5px;}
+.pd{color:var(--muted);}
+.lt{width:100%;border-collapse:collapse;font-size:13px;}
+.lt th{padding:9px 13px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);}
+.lt td{padding:11px 13px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.lt tr:last-child td{border-bottom:none;}
+.lt tr:hover td{background:var(--bg3);}
+.lp{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);}
+.chat-wrap{display:flex;flex-direction:column;height:520px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.chat-header{padding:12px 16px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.chat-title{font-size:13.5px;font-weight:700;}
+.chat-sub{font-size:11.5px;color:var(--muted);}
+.chat-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;}
+.msg{max-width:75%;padding:10px 13px;border-radius:12px;font-size:13px;line-height:1.55;}
+.msg.user{background:var(--accent);color:#000;align-self:flex-end;border-bottom-right-radius:4px;}
+.msg.bot{background:var(--bg3);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px;}
+.msg.system{background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.2);color:var(--purple);font-size:11.5px;align-self:center;text-align:center;max-width:90%;border-radius:8px;}
+.msg.typing{background:var(--bg3);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px;color:var(--muted);}
+.msg-meta{font-size:10.5px;margin-top:5px;opacity:.65;}
+.func-tag{display:inline-flex;align-items:center;gap:5px;background:rgba(167,139,250,.12);color:var(--purple);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;margin-top:6px;font-family:'JetBrains Mono',monospace;}
+.chat-input-row{padding:12px;background:var(--bg2);border-top:1px solid var(--border);display:flex;gap:8px;}
+.chat-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'Manrope',sans-serif;font-size:13.5px;padding:9px 13px;outline:none;}
+.chat-input:focus{border-color:var(--accent);}
+.split{display:grid;grid-template-columns:280px 1fr;gap:14px;height:580px;}
+.split-left{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow-y:auto;}
+.dl{display:flex;flex-direction:column;gap:1px;}
+.di{display:flex;align-items:center;gap:11px;padding:13px 16px;cursor:pointer;border-radius:var(--radius-sm);transition:background .12s;}
+.di:hover{background:var(--bg3);}
+.di.active{background:var(--bg3);border-left:3px solid var(--accent);}
+.di-av{width:36px;height:36px;border-radius:50%;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--accent);flex-shrink:0;}
+.di-info{flex:1;min-width:0;}
+.di-name{font-size:13px;font-weight:600;display:flex;justify-content:space-between;}
+.di-last{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+.di-time{font-size:10.5px;color:var(--muted);}
+.log-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;font-family:'JetBrains Mono',monospace;font-size:11.5px;height:240px;overflow-y:auto;line-height:1.9;}
+.ll{display:block;}
+.lt2{color:var(--muted);margin-right:7px;}
+.lok{color:var(--accent);}
+.lerr{color:var(--danger);}
+.linf{color:var(--info);}
+.lwarn{color:var(--warn);}
+.lfb{color:var(--purple);}
+.pause-bar{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:var(--radius-sm);padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:14px;font-size:13px;color:var(--warn);display:none;}
+.pause-bar.show{display:flex;}
+.fb-bar{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 15px;display:flex;align-items:center;gap:11px;margin-bottom:14px;font-size:12.5px;}
+.fb-bar svg{width:14px;height:14px;flex-shrink:0;}
+.fb-bar-time{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-left:auto;}
+.railway-bar{background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);border-radius:var(--radius-sm);padding:11px 15px;display:flex;align-items:center;gap:11px;margin-bottom:14px;font-size:12.5px;color:var(--info);}
+.railway-bar svg{width:14px;height:14px;flex-shrink:0;}
+.ac{display:flex;align-items:center;gap:12px;padding:14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;}
+.ac-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ac-info{flex:1;}
+.ac-name{font-size:13.5px;font-weight:600;}
+.ac-desc{font-size:12px;color:var(--muted);margin-top:2px;}
+.qr-ph{width:150px;height:150px;background:var(--bg3);border:1px dashed var(--border2);border-radius:var(--radius-sm);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:var(--muted);font-size:11.5px;margin:0 auto 14px;}
+.qr-ph svg{width:30px;height:30px;}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg2);border:1px solid var(--accent);color:var(--accent);padding:11px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;opacity:0;transform:translateY(8px);transition:all .22s;pointer-events:none;z-index:999;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.err{border-color:var(--danger);color:var(--danger);}
+.toast.warn{border-color:var(--warn);color:var(--warn);}
+.toast.info{border-color:var(--info);color:var(--info);}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+.stage-hot{background:rgba(239,68,68,.12);color:var(--danger);padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+.stage-warm{background:rgba(245,158,11,.12);color:var(--warn);padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+.stage-cold{background:rgba(96,165,250,.12);color:var(--info);padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+#qr-image{width:150px;height:150px;margin:0 auto 14px;display:block;}
+</style>
+</head>
+<body>
+
+<!-- Firebase -->
+<script type="module">
+import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import{getDatabase,ref,onValue,set,push,serverTimestamp,update}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+const app=initializeApp({
+  apiKey:"AIzaSyAs9o4Q7Td6sZ37E-qnBaNKi3bsD0Y8BAs",
+  authDomain:"igs-crm-59901.firebaseapp.com",
+  databaseURL:"https://igs-crm-59901-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"igs-crm-59901",
+  storageBucket:"igs-crm-59901.firebasestorage.app",
+  messagingSenderId:"160461403127",
+  appId:"1:160461403127:web:1819c36739b7e0586a74f2"
+});
+const db=getDatabase(app);
+onValue(ref(db,'leads'),snap=>{window._fbLeads=snap.val();updateAll(snap.val());setFb(true);addLog('↺ Firebase: заявки синхронизированы','lfb');},()=>{setFb(false);addLog('✗ Firebase: ошибка','lerr');});
+onValue(ref(db,'bot_settings'),snap=>{
+  const s=snap.val();if(!s)return;
+  if(s.systemPrompt){const e=document.getElementById('system-prompt');if(e)e.value=s.systemPrompt;}
+  if(s.botName){const e=document.getElementById('bot-name');if(e)e.value=s.botName;}
+  updateCount();
+});
+onValue(ref(db,'bot_status'),snap=>{const s=snap.val();if(s?.state)applyState(s.state);});
+onValue(ref(db,'whatsapp_status'),snap=>{
+  const s=snap.val();
+  const el=document.getElementById('bst');
+  if(el)el.textContent=s?.connected?`Онлайн · +${s.phone||'WhatsApp'}`:'Оффлайн · WhatsApp не подключён';
+});
+onValue(ref(db,'whatsapp_qr'),snap=>{
+  const s=snap.val();
+  if(s?.qr){
+    const img=document.getElementById('qr-image');
+    if(img){img.style.display='block';}
+    addLog('↺ QR-код обновлён из Firebase','lfb');
+  }
+});
+onValue(ref(db,'conversations'),snap=>{
+  const data=snap.val()||{};
+  renderDialogList(Object.entries(data).map(([id,v])=>({id,...v.meta,messageCount:v.meta?.messageCount||0})).sort((a,b)=>(b.lastActivity||0)-(a.lastActivity||0)));
+});
+window._fb={
+  save:(p,d)=>set(ref(db,p),d),
+  push:(p,d)=>push(ref(db,p),{...d,createdAt:serverTimestamp()}),
+  update:(p,d)=>update(ref(db,p),d),
+};
+</script>
+
+<div class="shell">
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+    <div class="logo-title">IGS Bot</div>
+    <div class="logo-sub">Панель управления</div>
+  </div>
+  <nav class="nav">
+    <div class="ns">Главное</div>
+    <button class="ni active" onclick="go('dashboard',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Дашборд<span class="sdot on" id="nav-dot"></span>
+    </button>
+    <button class="ni" onclick="go('leads',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      Заявки<span class="ni-badge b b-y" id="nav-cnt">0</span>
+    </button>
+    <button class="ni" onclick="go('dialogs',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Диалоги
+    </button>
+    <button class="ni" onclick="go('testchat',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+      Тестовый чат
+    </button>
+    <div class="ns">Настройка</div>
+    <button class="ni" onclick="go('functions',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      Функции
+    </button>
+    <button class="ni" onclick="go('prompt',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      Промпт
+    </button>
+    <button class="ni" onclick="go('keys',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+      API ключи
+    </button>
+    <button class="ni" onclick="go('features',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      Возможности
+    </button>
+    <div class="ns">Система</div>
+    <button class="ni" onclick="go('connect',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.14 12 19.79 19.79 0 0 1 1.08 3.4 2 2 0 0 1 3.06 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.09 8.9a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 16z"/></svg>
+      Подключение
+    </button>
+    <button class="ni" onclick="go('constructor',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/><path d="M15 5l3 3"/></svg>
+      Конструктор
+    </button>
+    <button class="ni" onclick="go('learning',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      Обучение<span class="ni-badge b b-p" id="nav-feedback-cnt">0</span>
+    </button>
+    <button class="ni" onclick="go('logs',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Логи
+    </button>
+  </nav>
+  <div class="sf">
+    IGS Outdoor © 2025
+    <div class="fb-row"><div class="fb-dot" id="fb-dot"></div><span id="fb-txt">Firebase: подключение...</span></div>
+    <div class="fb-row" style="margin-top:4px;"><div class="fb-dot" id="rail-dot"></div><span id="rail-txt">Railway: не настроен</span></div>
+  </div>
+</aside>
+
+<main class="main">
+
+<!-- ══ DASHBOARD ══ -->
+<div class="page active" id="page-dashboard">
+  <div class="ph"><div class="ph-title">Дашборд</div><div class="ph-sub">Реальное время · Firebase + Railway</div></div>
+  <div class="fb-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--purple)"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span id="fb-bar-txt" style="color:var(--muted)">Подключение к Firebase...</span><span class="fb-bar-time" id="fb-bar-time">—</span></div>
+  <div class="railway-bar" id="railway-bar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    <span id="railway-bar-txt">Railway: укажи URL в разделе API ключи</span>
+    <button class="btn btn-g" style="padding:4px 12px;font-size:11.5px;margin-left:auto;" onclick="checkRailway()">Проверить</button>
+  </div>
+  <div class="pause-bar" id="pause-bar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+    <span>Бот приостановлен. Сообщения не обрабатываются.</span>
+    <button class="btn btn-warn" style="margin-left:auto;padding:6px 14px;font-size:12px;" onclick="setBotState('active')">Возобновить</button>
+  </div>
+  <div class="banner">
+    <div class="banner-l">
+      <div class="bicon active" id="bicon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+      <div><div class="bn">IGS Outdoor Bot</div><div class="bs" id="bst">Инициализация...</div></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span class="b b-g" id="state-badge">Активен</span>
+      <button class="btn btn-warn" onclick="setBotState('paused')" id="btn-pause"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>Пауза</button>
+      <button class="btn btn-d" onclick="setBotState('stopped')" id="btn-stop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Стоп</button>
+    </div>
+  </div>
+  <div class="sgrid">
+    <div class="sc"><div class="sc-label">Заявок всего</div><div class="sc-val" style="color:var(--accent)" id="s-total">0</div><div class="sc-sub">из Firebase</div></div>
+    <div class="sc"><div class="sc-label">Горячих</div><div class="sc-val" style="color:var(--danger)" id="s-hot">0</div><div class="sc-sub">просят замер</div></div>
+    <div class="sc"><div class="sc-label">Ждут менеджера</div><div class="sc-val" style="color:var(--warn)" id="s-esc">0</div><div class="sc-sub">escalate_to_human</div></div>
+    <div class="sc"><div class="sc-label">Диалогов</div><div class="sc-val" id="s-dialogs">0</div><div class="sc-sub">активных</div></div>
+  </div>
+
+  <!-- Токены -->
+  <div class="card" style="margin-bottom:14px;">
+    <div class="ct" style="justify-content:space-between;margin-bottom:14px;">
+      <span>Использование токенов Claude</span>
+      <button class="btn btn-g" style="padding:4px 11px;font-size:12px;" onclick="loadTokenStats()">Обновить</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
+      <div class="sc"><div class="sc-label">Сегодня токенов</div><div class="sc-val" style="color:var(--info)" id="tok-today">—</div><div class="sc-sub" id="tok-today-cost">$0.0000</div></div>
+      <div class="sc"><div class="sc-label">За месяц</div><div class="sc-val" style="color:var(--purple)" id="tok-month">—</div><div class="sc-sub" id="tok-month-cost">$0.00</div></div>
+      <div class="sc"><div class="sc-label">Всего вызовов</div><div class="sc-val" id="tok-calls">—</div><div class="sc-sub">запросов к Claude</div></div>
+      <div class="sc"><div class="sc-label">Лимит месяца</div><div class="sc-val" id="tok-limit-pct" style="color:var(--accent)">—%</div><div class="sc-sub" id="tok-limit-sub">использовано</div></div>
+    </div>
+    <!-- Прогресс-бар лимита -->
+    <div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px;">
+        <span>Использовано токенов в этом месяце</span>
+        <span id="tok-progress-label">0 / 1 000 000</span>
+      </div>
+      <div style="background:var(--bg3);border-radius:6px;height:8px;overflow:hidden;">
+        <div id="tok-progress-bar" style="height:100%;background:var(--accent);border-radius:6px;width:0%;transition:width .5s;"></div>
+      </div>
+    </div>
+    <!-- Лимит настройка -->
+    <div style="display:flex;gap:10px;align-items:center;margin-top:12px;">
+      <span style="font-size:12.5px;color:var(--muted);white-space:nowrap;">Месячный лимит:</span>
+      <input type="number" id="tok-limit-input" placeholder="1000000" class="mono" style="width:140px;padding:6px 10px;font-size:12.5px;">
+      <button class="btn btn-g" style="padding:6px 13px;font-size:12.5px;" onclick="setTokenLimit()">Сохранить</button>
+      <span style="font-size:11.5px;color:var(--muted);">Sonnet 4: $3/1M input · $15/1M output</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">Последние заявки (Firebase live)</div>
+    <div id="dash-leads"><div style="color:var(--muted);font-size:13px;padding:16px 0;text-align:center;">Загрузка...</div></div>
+  </div>
+</div>
+
+<!-- ══ LEADS ══ -->
+<div class="page" id="page-leads">
+  <div class="ph"><div class="ph-title">Заявки</div><div class="ph-sub">Firebase реальное время · все заявки от бота</div></div>
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+      <div class="ct" style="margin:0;">Все заявки</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-g" style="padding:5px 11px;font-size:12px;" onclick="filterLeads('all')">Все</button>
+        <button class="btn btn-g" style="padding:5px 11px;font-size:12px;" onclick="filterLeads('hot')">🔥 Горячие</button>
+        <button class="btn btn-g" style="padding:5px 11px;font-size:12px;" onclick="filterLeads('escalated')">⚠ Менеджер</button>
+        <button class="btn btn-teal" style="padding:5px 11px;font-size:12px;" onclick="addTestLead()">+ Тест</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto;"><table class="lt"><thead><tr><th>Клиент</th><th>Телефон</th><th>Конструкция</th><th>Адрес</th><th>Размеры</th><th>Замер</th><th>Этап</th><th>Статус</th></tr></thead><tbody id="leads-body"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px;">Загрузка...</td></tr></tbody></table></div>
+  </div>
+</div>
+
+<!-- ══ DIALOGS ══ -->
+<div class="page" id="page-dialogs">
+  <div class="ph"><div class="ph-title">Диалоги</div><div class="ph-sub">История переписки · Firebase · накопительная синхронизация</div></div>
+  <div class="split">
+    <div class="split-left">
+      <div style="padding:12px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">Клиенты</div>
+      <div class="dl" id="dialog-list"><div style="padding:20px;color:var(--muted);font-size:13px;">Загрузка диалогов...</div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="chat-wrap" style="height:480px;">
+        <div class="chat-header">
+          <div><div class="chat-title" id="dlg-title">Выбери диалог</div><div class="chat-sub" id="dlg-sub">←</div></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-p" style="padding:5px 11px;font-size:12px;background:rgba(37,211,102,.15);color:var(--accent);border:1px solid rgba(37,211,102,.3);" onclick="quickFeedback('positive')" id="dlg-btn-pos">✅ Хорошо</button>
+            <button class="btn btn-d" style="padding:5px 11px;font-size:12px;" onclick="quickFeedback('negative')" id="dlg-btn-neg">❌ Ошибка</button>
+            <button class="btn btn-warn" style="padding:5px 11px;font-size:12px;" onclick="pauseSelectedDialog()" id="dlg-pause-btn">Пауза</button>
+            <button class="btn btn-d" style="padding:5px 11px;font-size:12px;" onclick="closeSelectedDialog()">Закрыть</button>
+          </div>
+        </div>
+        <div class="chat-msgs" id="dlg-msgs"><div class="msg system">Выбери клиента из списка слева</div></div>
+        <div class="chat-input-row">
+          <input class="chat-input" placeholder="Написать от лица менеджера..." id="dlg-input" onkeydown="if(event.key==='Enter')sendManagerMsg()">
+          <button class="btn btn-p" onclick="sendManagerMsg()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TEST CHAT ══ -->
+<div class="page" id="page-testchat">
+  <div class="ph"><div class="ph-title">Тестовый чат</div><div class="ph-sub">Реальный Claude API · виден вызов функций · промпт из настроек</div></div>
+  <div class="chat-wrap" style="height:500px;">
+    <div class="chat-header">
+      <div><div class="chat-title">Тест · IGS Outdoor Bot</div><div class="chat-sub" id="test-status">Введи Claude API Key в настройках</div></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-g" style="padding:5px 11px;font-size:12px;" onclick="clearTestChat()">Очистить</button>
+        <button class="btn btn-teal" style="padding:5px 11px;font-size:12px;" onclick="runScenario()">Авто-сценарий</button>
+      </div>
+    </div>
+    <div class="chat-msgs" id="test-msgs">
+      <div class="msg system">Это тестовый чат с реальным Claude API. Пиши как клиент — бот ответит через твой промпт и покажет какие функции вызвал.</div>
+    </div>
+    <div class="chat-input-row">
+      <input class="chat-input" placeholder="Напиши как клиент..." id="test-input" onkeydown="if(event.key==='Enter')sendTestMsg()">
+      <button class="btn btn-p" onclick="sendTestMsg()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px;">
+    <div class="ct">Быстрые тесты</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-g" onclick="quickMsg('Здравствуйте, хочу узнать про перголу для ресторана')">Пергола / ресторан</button>
+      <button class="btn btn-g" onclick="quickMsg('Сколько стоит слайдинг на балкон 4 метра?')">Цена слайдинга</button>
+      <button class="btn btn-g" onclick="quickMsg('Соедините меня с менеджером пожалуйста')">Запрос менеджера</button>
+      <button class="btn btn-g" onclick="quickMsg('Zip-штора для открытой террасы 6×3 метра')">Zip-шторы</button>
+      <button class="btn btn-g" onclick="quickMsg('Жарайды, маған перголаның бағасы қанша?')">Казахский</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FUNCTIONS ══ -->
+<div class="page" id="page-functions">
+  <div class="ph"><div class="ph-title">Функции бота</div><div class="ph-sub">Вызываются автоматически · настройки → Firebase → Railway</div></div>
+  <div class="fc enabled" id="fc-save">
+    <div class="fh"><label class="tog" style="margin:0;"><input type="checkbox" checked onchange="toggleFc('save',this)"><span class="ts-"></span></label><div class="fname">save_user_data</div><span class="fpb">7 параметров</span><span class="b b-g">Активна</span></div>
+    <div class="fdesc">Сохраняет заявку в Firebase → Custom API → Telegram. Вызывается только когда собраны реальные данные из диалога.</div>
+    <div class="fpl">
+      <div class="fpr hd"><span>Параметр</span><span>Тип</span><span>Инструкция</span></div>
+      <div class="fpr"><span class="pn">Name</span><span class="pt">string</span><span class="pd">Имя клиента из подписи WhatsApp</span></div>
+      <div class="fpr"><span class="pn">Location</span><span class="pt">string</span><span class="pd">Адрес объекта</span></div>
+      <div class="fpr"><span class="pn">Dimensions</span><span class="pt">string</span><span class="pd">Размеры: длина × ширина × высота</span></div>
+      <div class="fpr"><span class="pn">Construction_Type</span><span class="pt">string</span><span class="pd">Тип конструкции</span></div>
+      <div class="fpr"><span class="pn">Measurement_Date_Time</span><span class="pt">string</span><span class="pd">Дата и время замера</span></div>
+      <div class="fpr"><span class="pn">Stage</span><span class="pt">enum</span><span class="pd">горячий · тёплый · холодный</span></div>
+      <div class="fpr"><span class="pn">phone</span><span class="pt">string</span><span class="pd">Номер телефона WhatsApp</span></div>
+    </div>
+  </div>
+  <div class="fc enabled" id="fc-image">
+    <div class="fh"><label class="tog" style="margin:0;"><input type="checkbox" checked onchange="toggleFc('image',this)"><span class="ts-"></span></label><div class="fname">Image</div><span class="fpb">2 параметра</span><span class="b b-g">Активна</span></div>
+    <div class="fdesc">Срабатывает СРАЗУ при получении фото или видео от клиента. Создаёт заявку со статусом photo и уведомляет менеджера.</div>
+    <div class="fpl">
+      <div class="fpr hd"><span>Параметр</span><span>Тип</span><span>Описание</span></div>
+      <div class="fpr"><span class="pn">media_url</span><span class="pt">string</span><span class="pd">Описание медиафайла</span></div>
+      <div class="fpr"><span class="pn">caption</span><span class="pt">string</span><span class="pd">Подпись от клиента</span></div>
+    </div>
+  </div>
+  <div class="fc escalate" id="fc-esc">
+    <div class="fh"><label class="tog" style="margin:0;"><input type="checkbox" checked onchange="toggleFc('esc',this)"><span class="ts-"></span></label><div class="fname">escalate_to_human</div><span class="fpb">1 параметр</span><span class="b b-y">Приоритет</span></div>
+    <div class="fdesc">Клиент просит живого менеджера или перезвонить — бот замолкает, заявка → Firebase → Telegram со статусом escalated.</div>
+    <div class="fpl">
+      <div class="fpr hd"><span>Параметр</span><span>Тип</span><span>Описание</span></div>
+      <div class="fpr"><span class="pn">reason</span><span class="pt">string</span><span class="pd">Что именно сказал клиент</span></div>
+    </div>
+    <div style="margin-top:12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:var(--radius-sm);padding:11px 13px;font-size:12.5px;color:var(--warn);">После эскалации диалог записывается в Firebase paused_chats — бот не отвечает этому клиенту с любого устройства.</div>
+  </div>
+  <div class="brow"><button class="btn btn-p" onclick="saveFunctions()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>Сохранить в Firebase</button></div>
+</div>
+
+<!-- ══ PROMPT ══ -->
+<div class="page" id="page-prompt">
+  <div class="ph"><div class="ph-title">Системный промпт</div><div class="ph-sub">Сохраняется в Firebase → Railway подхватывает без перезапуска</div></div>
+  <div class="card">
+    <div class="ct">Личность бота</div>
+    <div class="field"><label>Имя бота</label><input type="text" value="Ассистент IGS Outdoor" id="bot-name"></div>
+    <div class="frow">
+      <div class="field"><label>Язык</label><select id="lang"><option value="auto" selected>Авто (рус/каз)</option><option value="ru">Русский</option><option value="kz">Казахский</option></select></div>
+      <div class="field"><label>Тональность</label><select id="tone"><option value="friendly" selected>Дружелюбная</option><option value="formal">Официальная</option></select></div>
+    </div>
+    <div class="divider"></div>
+    <div class="field">
+      <label>Системный промпт</label>
+      <textarea id="system-prompt" oninput="updateCount()">Ты — вежливый ассистент компании IGS Outdoor (Алматы, Казахстан).
+Компания: биоклиматические перголы, тентовые перголы Toscana, слайдинг, гильотина, zip-шторы, маркизы.
+
+ЗАДАЧА: принять обращение, выяснить потребность, получить фото, сохранить заявку.
+ЯЗЫК: отвечай на языке клиента — русский или казахский.
+
+ФУНКЦИИ:
+- save_user_data: когда собрал Construction_Type + Stage
+- Image: СРАЗУ при получении фото/видео
+- escalate_to_human: если клиент просит менеджера или перезвонить
+
+ЭТАПЫ: горячий=просит замер · тёплый=прислал фото/размеры · холодный=интересуется
+
+НЕ ДАВАЙ ЦЕНЫ. Замер бесплатный — предлагай активно.</textarea>
+      <div class="ccount"><span id="char-count">0</span> символов</div>
+    </div>
+    <div class="brow">
+      <button class="btn btn-p" onclick="savePrompt()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>Сохранить в Firebase</button>
+      <button class="btn btn-g" onclick="pushPromptToRailway()">→ Применить на Railway</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ KEYS ══ -->
+<div class="page" id="page-keys">
+  <div class="ph"><div class="ph-title">API ключи</div><div class="ph-sub">Ключи для тестового чата · Railway URL для управления ботом</div></div>
+  <div class="card">
+    <div class="ct">Railway Backend</div>
+    <div class="field">
+      <label>Railway URL (адрес твоего бэкенда)</label>
+      <input type="text" class="mono" id="railway-url" placeholder="https://igs-bot-production.up.railway.app" oninput="saveRailwayUrl()">
+      <div class="fhint">После деплоя на Railway скопируй URL сюда — дашборд будет управлять ботом через него</div>
+    </div>
+    <div class="brow"><button class="btn btn-teal" onclick="checkRailway()">Проверить соединение</button></div>
+  </div>
+  <div class="card">
+    <div class="ct">Claude API Key (для тестового чата)</div>
+    <div class="field">
+      <label>Claude API Key</label>
+      <input type="password" class="mono" id="claude-key-local" placeholder="sk-ant-api03-...">
+      <div class="fhint">Хранится только в браузере · используется только для тестового чата</div>
+    </div>
+    <div class="field">
+      <label>Модель</label>
+      <select id="claude-model-local">
+        <option value="claude-sonnet-4-20250514" selected>Claude Sonnet 4 — рекомендуется</option>
+        <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 — быстрее/дешевле</option>
+      </select>
+    </div>
+    <div class="brow">
+      <button class="btn btn-p" onclick="saveLocalKeys()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>Сохранить локально</button>
+      <button class="btn btn-teal" onclick="testClaudeKey()">Проверить Claude</button>
+    </div>
+    <div style="margin-top:12px;background:rgba(37,211,102,.08);border:1px solid rgba(37,211,102,.2);border-radius:var(--radius-sm);padding:11px 13px;font-size:12.5px;color:var(--accent);">
+      Реальные API ключи (Claude, OpenAI, Telegram, Firebase) вставляются в Railway Variables — не сюда. Здесь только для тестового чата.
+    </div>
+  </div>
+</div>
+
+<!-- ══ FEATURES ══ -->
+<div class="page" id="page-features">
+  <div class="ph"><div class="ph-title">Возможности</div><div class="ph-sub">Сохраняются в Firebase · Railway читает при каждом сообщении</div></div>
+  <div class="card">
+    <div class="ct">Функции</div>
+    <div class="tr"><div class="ti"><div class="tn">Распознавание голосовых</div><div class="td">OpenAI Whisper API</div></div><label class="tog"><input type="checkbox" checked id="f-voice"><span class="ts-"></span></label></div>
+    <div class="tr"><div class="ti"><div class="tn">Анализ фотографий</div><div class="td">Claude Vision — описывает объект и задаёт вопросы</div></div><label class="tog"><input type="checkbox" checked id="f-photo"><span class="ts-"></span></label></div>
+    <div class="tr"><div class="ti"><div class="tn">Эскалация к менеджеру</div><div class="td">escalate_to_human + Telegram + пауза диалога в Firebase</div></div><label class="tog"><input type="checkbox" checked id="f-esc"><span class="ts-"></span></label></div>
+    <div class="tr"><div class="ti"><div class="tn">Накопительная история</div><div class="td">Диалог хранится в Firebase — не теряется при перезапуске</div></div><label class="tog"><input type="checkbox" checked id="f-mem"><span class="ts-"></span></label></div>
+    <div class="tr"><div class="ti"><div class="tn">Автопауза ночью</div><div class="td">23:00–08:00 Алматы (UTC+5)</div></div><label class="tog"><input type="checkbox" checked id="f-night"><span class="ts-"></span></label></div>
+    <div class="tr"><div class="ti"><div class="tn">Определение этапа (Stage)</div><div class="td">горячий / тёплый / холодный автоматически</div></div><label class="tog"><input type="checkbox" checked id="f-stage"><span class="ts-"></span></label></div>
+    <div class="tr"><div class="ti"><div class="tn">Антиспам</div><div class="td">Игнорировать сообщения с интервалом < 2 сек</div></div><label class="tog"><input type="checkbox" checked id="f-spam"><span class="ts-"></span></label></div>
+    <div class="brow"><button class="btn btn-p" onclick="saveFeatures()">Сохранить в Firebase</button></div>
+  </div>
+  <div class="card">
+    <div class="ct">Лимиты</div>
+    <div class="frow">
+      <div class="field"><label>Макс. токенов</label><input type="text" value="1024" id="max-tokens"></div>
+      <div class="field"><label>История (сообщений)</label><input type="text" value="20" id="hist-limit"></div>
+    </div>
+    <div class="frow">
+      <div class="field"><label>Задержка ответа (мс)</label><input type="text" value="1500" id="reply-delay"></div>
+      <div class="field"><label>Антиспам порог (мс)</label><input type="text" value="2000" id="spam-ms"></div>
+    </div>
+    <div class="brow"><button class="btn btn-p" onclick="saveFeatures()">Сохранить</button></div>
+  </div>
+</div>
+
+<!-- ══ CONNECT ══ -->
+<div class="page" id="page-connect">
+  <div class="ph"><div class="ph-title">Подключение WhatsApp</div><div class="ph-sub">QR-код с Railway сервера</div></div>
+  <div class="card" style="text-align:center;padding:32px;">
+    <div class="qr-ph" id="qr-placeholder">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" color="var(--muted)"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M18 14h.01M14 18h.01M18 18h.01"/></svg>
+      <span id="qr-status-txt">QR появится после деплоя на Railway</span>
+    </div>
+    <canvas id="qr-canvas" style="display:none;margin:0 auto 14px;"></canvas>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:18px;max-width:380px;margin-left:auto;margin-right:auto;">После деплоя на Railway и указания URL в разделе API ключи — QR-код загрузится автоматически из Firebase.</p>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button class="btn btn-p" onclick="fetchQR()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Обновить QR</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">Инструкция</div>
+    <div style="font-size:13px;color:var(--muted);line-height:2.4;">
+      <div><span style="color:var(--accent);font-weight:700;">1.</span> Загрузи zip на GitHub</div>
+      <div><span style="color:var(--accent);font-weight:700;">2.</span> Railway → New Project → Deploy from GitHub</div>
+      <div><span style="color:var(--accent);font-weight:700;">3.</span> Добавь Variables из .env.example</div>
+      <div><span style="color:var(--accent);font-weight:700;">4.</span> Скопируй Railway URL → раздел API ключи</div>
+      <div><span style="color:var(--accent);font-weight:700;">5.</span> Нажми "Обновить QR" → отсканируй в WhatsApp</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LOGS ══ -->
+<!-- ══ LEARNING ══ -->
+<!-- ══ CONSTRUCTOR ══ -->
+<div class="page" id="page-constructor">
+  <div class="ph"><div class="ph-title">Конструктор промпта</div><div class="ph-sub">Общайся с Claude — он поможет создать промпт для бота и применит его одной кнопкой</div></div>
+
+  <div style="display:grid;grid-template-columns:1fr 380px;gap:14px;align-items:start;">
+
+    <!-- Чат с Claude -->
+    <div class="chat-wrap" style="height:560px;">
+      <div class="chat-header">
+        <div>
+          <div class="chat-title">Чат с Claude — конструктор бота</div>
+          <div class="chat-sub" id="con-status">Опиши своего бота — Claude поможет создать промпт</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-g" style="padding:5px 11px;font-size:12px;" onclick="clearConstructor()">Очистить</button>
+          <button class="btn btn-teal" style="padding:5px 11px;font-size:12px;" onclick="startConstructor()">Начать заново</button>
+        </div>
+      </div>
+      <div class="chat-msgs" id="con-msgs">
+        <div class="msg system">Привет! Я помогу создать промпт для твоего AI бота. Расскажи: какой это бизнес, что делает бот, как должен общаться с клиентами?</div>
+      </div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="con-input" placeholder="Опиши бизнес, задачи бота, стиль общения..." onkeydown="if(event.key==='Enter'&&!event.shiftKey)sendConstructorMsg()">
+        <button class="btn btn-p" onclick="sendConstructorMsg()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Панель промпта -->
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card" style="padding:18px;">
+        <div class="ct" style="margin-bottom:12px;">Сгенерированный промпт</div>
+        <textarea id="con-prompt-result" style="min-height:320px;font-size:12.5px;line-height:1.7;" placeholder="Здесь появится промпт после того как Claude его сгенерирует..."></textarea>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-p" style="flex:1;justify-content:center;" onclick="applyConstructorPrompt()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Применить к боту
+          </button>
+          <button class="btn btn-g" onclick="copyConstructorPrompt()">Копировать</button>
+        </div>
+      </div>
+
+      <div class="card" style="padding:18px;background:rgba(167,139,250,.06);border-color:rgba(167,139,250,.2);">
+        <div class="ct" style="color:var(--purple);margin-bottom:10px;">Быстрые шаблоны</div>
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <button class="btn btn-g" style="justify-content:flex-start;font-size:12.5px;" onclick="useTemplate('restaurant')">🍽 Ресторан / кафе</button>
+          <button class="btn btn-g" style="justify-content:flex-start;font-size:12.5px;" onclick="useTemplate('salon')">💇 Салон красоты</button>
+          <button class="btn btn-g" style="justify-content:flex-start;font-size:12.5px;" onclick="useTemplate('realty')">🏠 Недвижимость</button>
+          <button class="btn btn-g" style="justify-content:flex-start;font-size:12.5px;" onclick="useTemplate('clinic')">🏥 Клиника / медцентр</button>
+          <button class="btn btn-g" style="justify-content:flex-start;font-size:12.5px;" onclick="useTemplate('shop')">🛍 Интернет-магазин</button>
+          <button class="btn btn-g" style="justify-content:flex-start;font-size:12.5px;" onclick="useTemplate('custom')">✏️ Свой вариант</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-learning">
+  <div class="ph"><div class="ph-title">Обучение бота</div><div class="ph-sub">Оценивай диалоги → бот учится на следующих разговорах</div></div>
+
+  <!-- Как это работает -->
+  <div class="card" style="background:rgba(167,139,250,.06);border-color:rgba(167,139,250,.2);">
+    <div class="ct" style="color:var(--purple);">Как работает обучение</div>
+    <div style="font-size:13px;color:var(--color-text-secondary);line-height:1.9;">
+      <div>1. Открываешь диалог в разделе <b>Диалоги</b></div>
+      <div>2. Нажимаешь ✅ или ❌ и пишешь объяснение</div>
+      <div>3. Оценка сохраняется в Firebase</div>
+      <div>4. <b>В следующем диалоге</b> бот видит последние оценки прямо в промпте и не повторяет ошибки</div>
+    </div>
+  </div>
+
+  <!-- Форма новой оценки -->
+  <div class="card">
+    <div class="ct">Оценить диалог вручную</div>
+    <div class="field">
+      <label>Номер клиента (chatId)</label>
+      <input type="text" class="mono" id="fb-chatid" placeholder="+77011234567@c.us">
+    </div>
+    <div class="field">
+      <label>Оценка</label>
+      <div style="display:flex;gap:10px;margin-top:6px;">
+        <button class="btn" id="btn-pos" onclick="selectRating('positive')" style="flex:1;justify-content:center;background:rgba(37,211,102,.1);color:var(--accent);border:1px solid rgba(37,211,102,.3);">
+          ✅ Хороший диалог
+        </button>
+        <button class="btn" id="btn-neg" onclick="selectRating('negative')" style="flex:1;justify-content:center;background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.3);">
+          ❌ Плохой диалог
+        </button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Объяснение — что пошло не так / что было хорошо</label>
+      <textarea id="fb-comment" style="min-height:90px;" placeholder="Например: бот задал сразу 3 вопроса и клиент перестал отвечать"></textarea>
+    </div>
+    <div class="field">
+      <label>Пример фразы бота (опционально)</label>
+      <input type="text" id="fb-example" placeholder='Например: "Укажите длину, ширину, высоту и адрес объекта"'>
+    </div>
+    <div class="brow">
+      <button class="btn btn-p" onclick="submitFeedback()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Сохранить оценку
+      </button>
+      <button class="btn btn-teal" onclick="previewPrompt()">Посмотреть текущий промпт</button>
+    </div>
+  </div>
+
+  <!-- Статистика оценок -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;">
+    <div class="sc"><div class="sc-label">Всего оценок</div><div class="sc-val" id="fb-total">0</div><div class="sc-sub">накоплено</div></div>
+    <div class="sc"><div class="sc-label">Положительных</div><div class="sc-val" style="color:var(--accent)" id="fb-pos">0</div><div class="sc-sub">✅ хороших диалогов</div></div>
+    <div class="sc"><div class="sc-label">Отрицательных</div><div class="sc-val" style="color:var(--danger)" id="fb-neg">0</div><div class="sc-sub">❌ ошибок</div></div>
+  </div>
+
+  <!-- Паттерны ошибок -->
+  <div class="card">
+    <div class="ct" style="justify-content:space-between;margin-bottom:12px;">
+      <span>Автоматически обнаруженные ошибки</span>
+      <button class="btn btn-g" style="padding:5px 11px;font-size:12px;" onclick="loadErrorPatterns()">Обновить</button>
+    </div>
+    <div id="error-patterns-list">
+      <div style="color:var(--muted);font-size:13px;padding:12px 0;">Загрузка...</div>
+    </div>
+  </div>
+
+  <!-- Список оценок -->
+  <div class="card">
+    <div class="ct" style="justify-content:space-between;margin-bottom:12px;">
+      <span>История оценок</span>
+      <button class="btn btn-g" style="padding:5px 11px;font-size:12px;" onclick="loadFeedbackList()">Обновить</button>
+    </div>
+    <div id="feedback-list">
+      <div style="color:var(--muted);font-size:13px;padding:12px 0;">Загрузка...</div>
+    </div>
+  </div>
+
+  <!-- Промпт превью -->
+  <div class="card" id="prompt-preview-card" style="display:none;">
+    <div class="ct">Текущий промпт бота (с обучением)</div>
+    <pre id="prompt-preview-text" style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);white-space:pre-wrap;line-height:1.7;max-height:400px;overflow-y:auto;"></pre>
+  </div>
+</div>
+
+<div class="page" id="page-logs">
+  <div class="ph"><div class="ph-title">Логи</div><div class="ph-sub">Журнал дашборда · для Railway логов смотри в Railway → Logs</div></div>
+  <div class="card">
+    <div class="ct" style="justify-content:space-between;margin-bottom:10px;">
+      <span>Консоль дашборда</span>
+      <button class="btn btn-g" style="padding:4px 11px;font-size:11.5px;" onclick="clearLogs()">Очистить</button>
+    </div>
+    <div class="log-box" id="log-box"></div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg><span id="toast-txt">OK</span></div>
+
+<script>
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const $  = id => document.getElementById(id);
+const now = () => new Date().toTimeString().slice(0,8);
+window._botState   = 'active';
+window._testHistory = [];
+window._currentChatId = null;
+let _filter = 'all';
+
+function addLog(t,c){
+  const b=$('log-box');if(!b)return;
+  const l=document.createElement('span');l.className='ll';
+  l.innerHTML=`<span class="lt2">${now()}</span><span class="${c||'linf'}">${t}</span>`;
+  b.appendChild(l);b.scrollTop=b.scrollHeight;
+}
+function toast(msg,type){
+  const el=$('toast');$('toast-txt').textContent=msg;
+  el.className='toast'+(type?' '+type:'');el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2800);
+}
+function go(name,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(b=>b.classList.remove('active'));
+  $('page-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+}
+function updateCount(){const el=$('system-prompt');if(el&&$('char-count'))$('char-count').textContent=el.value.length;}
+function setFb(ok){
+  const d=$('fb-dot'),t=$('fb-txt'),bt=$('fb-bar-txt'),btt=$('fb-bar-time');
+  if(d)d.className='fb-dot'+(ok?' on':'');
+  if(t)t.textContent=ok?'Firebase: подключён':'Firebase: ошибка';
+  if(bt){bt.textContent=ok?'Firebase синхронизирован':'Firebase: ошибка';bt.style.color=ok?'var(--accent)':'var(--danger)';}
+  if(btt)btt.textContent=now();
+}
+
+// ── Railway API ───────────────────────────────────────────────────────────────
+function getRailwayUrl(){ return (localStorage.getItem('igs_railway_url')||'').replace(/\/$/,''); }
+function saveRailwayUrl(){ localStorage.setItem('igs_railway_url',$('railway-url')?.value||''); }
+
+async function railwayFetch(path, opts={}){
+  const base = getRailwayUrl();
+  if(!base) throw new Error('Railway URL не указан');
+  const res = await fetch(base+path, { headers:{'Content-Type':'application/json'}, ...opts });
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+async function checkRailway(){
+  const base=getRailwayUrl();
+  if(!base){toast('Укажи Railway URL в разделе API ключи','warn');return;}
+  try {
+    const data = await railwayFetch('/health');
+    $('rail-dot').className='fb-dot on';
+    $('rail-txt').textContent=`Railway: OK · uptime ${data.uptime}s`;
+    $('railway-bar-txt').textContent=`Railway подключён · бот ${data.botState} · uptime ${data.uptime}s`;
+    toast('Railway: соединение установлено');
+    addLog(`✓ Railway: ok (${data.botState})`,'lok');
+    // Также получаем полный статус
+    const status = await railwayFetch('/api/status');
+    $('s-dialogs').textContent = status.activeChats||0;
+    applyState(status.botState||'active');
+  } catch(e){
+    $('rail-dot').className='fb-dot';
+    $('rail-txt').textContent=`Railway: ошибка — ${e.message}`;
+    $('railway-bar-txt').textContent=`Railway: ошибка подключения — ${e.message}`;
+    toast('Railway: '+e.message,'err');
+    addLog(`✗ Railway: ${e.message}`,'lerr');
+  }
+}
+
+// ── Bot state ─────────────────────────────────────────────────────────────────
+function applyState(state){
+  window._botState=state;
+  const badge=$('state-badge'),bst=$('bst'),icon=$('bicon'),pb=$('pause-bar'),nd=$('nav-dot');
+  const states={
+    active:{cls:'b b-g',txt:'Активен',icon:'bicon active',svgColor:'var(--accent)',status:'Онлайн · WhatsApp подключён',dot:'sdot on',pb:false},
+    paused:{cls:'b b-y',txt:'На паузе',icon:'bicon paused',svgColor:'var(--warn)',status:'Пауза · Сообщения не обрабатываются',dot:'sdot pause',pb:true},
+    stopped:{cls:'b b-r',txt:'Остановлен',icon:'bicon stopped',svgColor:'var(--danger)',status:'Оффлайн · Бот не отвечает',dot:'sdot off',pb:false},
+  };
+  const s=states[state]||states.active;
+  if(badge){badge.className=s.cls;badge.textContent=s.txt;}
+  if(icon){icon.className=s.icon;icon.querySelector('svg').setAttribute('stroke',s.svgColor);}
+  if(nd)nd.className=s.dot;
+  if(pb)pb.className='pause-bar'+(s.pb?' show':'');
+  const btnStop=$('btn-stop');
+  if(btnStop){
+    btnStop.className='btn '+(state==='stopped'?'btn-g':'btn-d');
+    btnStop.innerHTML=state==='stopped'
+      ?`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>Запустить`
+      :`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Стоп`;
+    btnStop.onclick=()=>setBotState(state==='stopped'?'active':'stopped');
+  }
+}
+
+async function setBotState(state){
+  // 1. Сохраняем в Firebase (мгновенно)
+  if(window._fb) window._fb.save('bot_status',{state,updatedAt:Date.now()});
+  applyState(state);
+  // 2. Отправляем на Railway (бэкенд)
+  try {
+    await railwayFetch('/api/bot/state',{method:'POST',body:JSON.stringify({state})});
+    addLog(`✓ Бот: ${state}`,'lok');
+  } catch(e){
+    addLog(`⚠ Railway не отвечает (Firebase обновлён): ${e.message}`,'lwarn');
+  }
+  toast({active:'Бот запущен',paused:'Бот на паузе',stopped:'Бот остановлен'}[state]);
+}
+
+// ── Leads ─────────────────────────────────────────────────────────────────────
+function updateAll(data){
+  const leads=data?Object.entries(data).map(([id,v])=>({id,...v})).reverse():[];
+  if($('s-total'))$('s-total').textContent=leads.length;
+  if($('s-hot'))$('s-hot').textContent=leads.filter(l=>l.Stage==='горячий').length;
+  if($('s-esc'))$('s-esc').textContent=leads.filter(l=>l.status==='escalated').length;
+  if($('nav-cnt'))$('nav-cnt').textContent=leads.length;
+  renderLeads(leads);
+  renderDashLeads(leads);
+}
+function filterLeads(f){_filter=f;if(window._fbLeads)updateAll(window._fbLeads);}
+function renderLeads(leads){
+  const tb=$('leads-body');if(!tb)return;
+  let fl=leads;
+  if(_filter==='hot')fl=leads.filter(l=>l.Stage==='горячий');
+  if(_filter==='escalated')fl=leads.filter(l=>l.status==='escalated');
+  if(!fl.length){tb.innerHTML=`<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px;">Заявок нет</td></tr>`;return;}
+  tb.innerHTML=fl.map(l=>`<tr>
+    <td><span style="font-weight:500">${l.Name||'—'}</span></td>
+    <td><span class="lp">${l.phone||'—'}</span></td>
+    <td><span style="font-size:12px;color:var(--muted)">${l.Construction_Type||'—'}</span></td>
+    <td><span style="font-size:12px;color:var(--muted)">${l.Location||'—'}</span></td>
+    <td><span style="font-size:12px;color:var(--muted)">${l.Dimensions||'—'}</span></td>
+    <td><span style="font-size:12px;color:var(--muted)">${l.Measurement_Date_Time||'—'}</span></td>
+    <td>${stagePill(l.Stage)}</td>
+    <td>${statusBadge(l.status)}</td>
+  </tr>`).join('');
+}
+function renderDashLeads(leads){
+  const el=$('dash-leads');if(!el)return;
+  if(!leads.length){el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:14px 0;">Заявок пока нет</div>';return;}
+  el.innerHTML=leads.slice(0,5).map(l=>`
+    <div class="tr" style="padding:11px 0;">
+      <div class="ti">
+        <div class="tn">${l.Name||l.phone||'—'} <span style="font-size:12px;color:var(--muted);font-weight:400;">· ${l.phone||''}</span></div>
+        <div class="td">${[l.Construction_Type,l.Location,l.Dimensions].filter(Boolean).join(' · ')}</div>
+      </div>
+      <div style="display:flex;gap:7px;align-items:center;">${stagePill(l.Stage)} ${statusBadge(l.status)}</div>
+    </div>`).join('');
+}
+function stagePill(s){
+  if(s==='горячий')return`<span class="stage-hot">🔥 горячий</span>`;
+  if(s==='тёплый')return`<span class="stage-warm">☀ тёплый</span>`;
+  if(s==='холодный')return`<span class="stage-cold">❄ холодный</span>`;
+  return'<span style="color:var(--muted)">—</span>';
+}
+function statusBadge(s){
+  return({new:'<span class="b b-b">Новая</span>',escalated:'<span class="b b-y">Нужен менеджер</span>',photo:'<span class="b b-p">Фото</span>',done:'<span class="b b-g">Закрыта</span>'})[s]||'<span class="b b-b">Новая</span>';
+}
+function fmtTime(ts){if(!ts)return'—';return new Date(ts).toLocaleString('ru',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
+
+function addTestLead(){
+  if(!window._fb){toast('Firebase не подключён','err');return;}
+  const types=['Биоклиматическая пергола','Слайдинг','Zip-шторы','Тентовая пергола','Гильотина'];
+  const stages=['горячий','тёплый','холодный'];
+  window._fb.push('leads',{
+    Name:'Тест '+Math.floor(Math.random()*100),
+    phone:'+7 701 '+Math.floor(Math.random()*9000000+1000000),
+    Location:'ул. Абая '+Math.floor(Math.random()*200),
+    Construction_Type:types[Math.floor(Math.random()*types.length)],
+    Dimensions:`${Math.floor(Math.random()*6+2)}×${Math.floor(Math.random()*4+2)} м`,
+    Measurement_Date_Time:'Пятница 15:00',
+    Stage:stages[Math.floor(Math.random()*3)],
+    status:'new',
+  }).then(()=>{toast('Тест заявка добавлена');addLog('↑ save_user_data тест → Firebase','lfb');});
+}
+
+// ── Dialogs ───────────────────────────────────────────────────────────────────
+function renderDialogList(dialogs){
+  const el=$('dialog-list');if(!el)return;
+  if($('s-dialogs'))$('s-dialogs').textContent=dialogs.length;
+  if(!dialogs.length){el.innerHTML='<div style="padding:18px;color:var(--muted);font-size:13px;">Нет диалогов</div>';return;}
+  el.innerHTML=dialogs.map((d,i)=>`
+    <div class="di ${i===0?'active':''}" onclick="openDialog('${d.chatId||d.id}',this)">
+      <div class="di-av">${((d.chatId||d.id||'?')[0]).toUpperCase()}</div>
+      <div class="di-info">
+        <div class="di-name"><span>${d.chatId||d.id}</span><span class="di-time">${fmtTime(d.lastActivity)}</span></div>
+        <div class="di-last">${d.lastMessage||'—'} · ${d.messageCount||0} сообщ.</div>
+      </div>
+    </div>`).join('');
+  if(dialogs[0])openDialog(dialogs[0].chatId||dialogs[0].id, el.querySelector('.di'));
+}
+
+async function openDialog(chatId,el){
+  document.querySelectorAll('.di').forEach(d=>d.classList.remove('active'));
+  if(el)el.classList.add('active');
+  window._currentChatId=chatId;
+  $('dlg-title').textContent=chatId;
+  $('dlg-sub').textContent='Загрузка истории...';
+  const msgs=$('dlg-msgs');
+  msgs.innerHTML='<div class="msg system">Загрузка...</div>';
+
+  try {
+    // Загружаем сообщения из Railway
+    const data = await railwayFetch(`/api/dialogs/${encodeURIComponent(chatId)}/messages`);
+    $('dlg-sub').textContent=`${data.length} сообщений · из Firebase`;
+    msgs.innerHTML=`<div class="msg system">Диалог · ${chatId}</div>`;
+    data.forEach(m=>{
+      const div=document.createElement('div');
+      const isUser=m.role==='user';
+      div.className='msg '+(isUser?'user':'bot');
+      const text=typeof m.content==='string'?m.content:m.content?.find?.(b=>b.type==='text')?.text||'[медиа]';
+      div.innerHTML=`${text}<div class="msg-meta">${fmtTime(m.timestamp)}</div>`;
+      msgs.appendChild(div);
+    });
+    msgs.scrollTop=msgs.scrollHeight;
+  } catch(e){
+    $('dlg-sub').textContent='Railway недоступен — данные из Firebase';
+    msgs.innerHTML='<div class="msg system">Укажи Railway URL для просмотра диалогов</div>';
+  }
+}
+
+async function quickFeedback(rating) {
+  if (!window._currentChatId) { toast('Выбери диалог','warn'); return; }
+  const comment = prompt(rating === 'positive'
+    ? '✅ Что бот сделал хорошо? Опиши кратко:'
+    : '❌ Что пошло не так? Какую ошибку допустил бот?'
+  );
+  if (!comment) return;
+  try {
+    await railwayFetch('/api/feedback', {
+      method: 'POST',
+      body: JSON.stringify({ chatId: window._currentChatId, rating, comment }),
+    });
+    toast(rating === 'positive' ? '✅ Бот запомнил что сработало!' : '❌ Бот запомнит эту ошибку!');
+    addLog(`✓ Оценка [${rating}]: "${comment.slice(0,50)}"`, 'lfb');
+    if($('fb-chatid'))$('fb-chatid').value = window._currentChatId;
+  } catch(e) { toast('Railway: '+e.message,'err'); }
+}
+
+async function pauseSelectedDialog(){
+  if(!window._currentChatId)return;
+  try {
+    await railwayFetch(`/api/chat/${encodeURIComponent(window._currentChatId)}/pause`,{method:'POST'});
+    toast('Диалог приостановлен — синхронизировано в Firebase','warn');
+    addLog(`⏸ Пауза: ${window._currentChatId}`,'lwarn');
+  } catch(e){ toast('Railway: '+e.message,'err'); }
+}
+
+async function closeSelectedDialog(){
+  if(!window._currentChatId)return;
+  try {
+    await railwayFetch(`/api/chat/${encodeURIComponent(window._currentChatId)}/resume`,{method:'POST'});
+    toast('Диалог возобновлён','info');
+    addLog(`▶ Возобновлён: ${window._currentChatId}`,'lok');
+  } catch(e){ toast('Railway: '+e.message,'err'); }
+}
+
+async function sendManagerMsg(){
+  const inp=$('dlg-input');
+  const msg=inp.value.trim();if(!msg)return;
+  if(!window._currentChatId){toast('Выбери диалог','warn');return;}
+  try {
+    await railwayFetch(`/api/chat/${encodeURIComponent(window._currentChatId)}/send`,{method:'POST',body:JSON.stringify({message:msg})});
+    const div=document.createElement('div');
+    div.className='msg bot';
+    div.innerHTML=`<span style="font-size:10.5px;display:block;opacity:.7;margin-bottom:3px;">👤 Менеджер</span>${msg}<div class="msg-meta">${now()}</div>`;
+    $('dlg-msgs').appendChild(div);
+    $('dlg-msgs').scrollTop=99999;
+    inp.value='';
+    toast('Сообщение отправлено','info');
+  } catch(e){toast('Railway: '+e.message,'err');}
+}
+
+// ── Test Chat — реальный Claude API ──────────────────────────────────────────
+function appendTestMsg(text,role,funcName){
+  const msgs=$('test-msgs');
+  const div=document.createElement('div');
+  div.className='msg '+role;
+  let html=text;
+  if(funcName)html+=`<div class="func-tag">⚙ ${funcName}</div>`;
+  html+=`<div class="msg-meta">${now()}</div>`;
+  div.innerHTML=html;
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+  return div;
+}
+
+async function sendTestMsg(){
+  const inp=$('test-input');
+  const msg=inp.value.trim();if(!msg)return;
+  const key=localStorage.getItem('igs_claude_key');
+  if(!key){toast('Укажи Claude API Key в разделе API ключи','warn');return;}
+  inp.value='';
+  appendTestMsg(msg,'user',null);
+  window._testHistory.push({role:'user',content:msg});
+  const typingDiv=appendTestMsg('печатает...','typing',null);
+  $('test-status').textContent='Claude думает...';
+
+  try {
+    const prompt=$('system-prompt')?.value||'Ты ассистент IGS Outdoor.';
+    const model=localStorage.getItem('igs_model')||'claude-sonnet-4-20250514';
+
+    // Инструменты для тестового чата
+    const tools=[
+      {name:'save_user_data',description:'Сохраняет заявку клиента.',input_schema:{type:'object',properties:{Name:{type:'string'},Location:{type:'string'},Dimensions:{type:'string'},Construction_Type:{type:'string'},Measurement_Date_Time:{type:'string'},Stage:{type:'string',enum:['горячий','тёплый','холодный']},phone:{type:'string'}},required:['Construction_Type','Stage']}},
+      {name:'Image',description:'Вызывай при получении фото.',input_schema:{type:'object',properties:{caption:{type:'string'}}}},
+      {name:'escalate_to_human',description:'Передаёт менеджеру.',input_schema:{type:'object',properties:{reason:{type:'string'}},required:['reason']}},
+    ];
+
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model,max_tokens:1024,system:prompt,tools,messages:window._testHistory}),
+    });
+
+    if(!resp.ok){const e=await resp.json();throw new Error(e.error?.message||resp.status);}
+    const data=await resp.json();
+
+    typingDiv.remove();
+    let replyText='';
+    let funcsCalled=[];
+
+    for(const block of data.content){
+      if(block.type==='text') replyText+=block.text;
+      if(block.type==='tool_use'){
+        funcsCalled.push(block.name);
+        addLog(`⚙ Тест: функция ${block.name}(${JSON.stringify(block.input)})`,'lfb');
+      }
+    }
+
+    window._testHistory.push({role:'assistant',content:data.content});
+    appendTestMsg(replyText||'(нет текста)',  'bot', funcsCalled.length?funcsCalled.join(', '):null);
+    $('test-status').textContent='Готов · '+model;
+
+    if(funcsCalled.includes('escalate_to_human'))toast('escalate_to_human вызвана!','warn');
+    if(funcsCalled.includes('save_user_data'))toast('save_user_data вызвана!','info');
+    if(funcsCalled.includes('Image'))toast('Image вызвана!','info');
+
+  } catch(e){
+    typingDiv.remove();
+    appendTestMsg('Ошибка: '+e.message,'msg system',null);
+    $('test-status').textContent='Ошибка: '+e.message;
+    toast(e.message,'err');
+  }
+}
+
+function quickMsg(msg){$('test-input').value=msg;sendTestMsg();}
+function clearTestChat(){
+  $('test-msgs').innerHTML='<div class="msg system">Чат очищен.</div>';
+  window._testHistory=[];
+}
+async function runScenario(){
+  clearTestChat();
+  const steps=['Здравствуйте, интересует пергола для ресторана','Терраса 8×5 метров, адрес: Алматы, ул. Сейфуллина 500','Биоклиматическая, хочу выехать на замер в пятницу в 14:00'];
+  for(let i=0;i<steps.length;i++){
+    await new Promise(r=>setTimeout(r,i===0?200:3000));
+    $('test-input').value=steps[i];
+    await sendTestMsg();
+  }
+}
+
+// ── QR ───────────────────────────────────────────────────────────────────────
+async function fetchQR(){
+  try {
+    const data=await railwayFetch('/api/qr');
+    if(data.qr){
+      $('qr-status-txt').textContent='QR готов — отсканируй в WhatsApp';
+      toast('QR-код получен','info');
+      addLog('↓ QR-код с Railway','lfb');
+    } else {
+      $('qr-status-txt').textContent='WhatsApp уже подключён ✓';
+      toast('WhatsApp подключён');
+    }
+  } catch(e){toast('Укажи Railway URL','warn');}
+}
+
+// ── Save functions ────────────────────────────────────────────────────────────
+async function savePrompt(){
+  if(!window._fb){toast('Firebase не подключён','err');return;}
+  const data={systemPrompt:$('system-prompt')?.value,botName:$('bot-name')?.value,lang:$('lang')?.value,tone:$('tone')?.value,updatedAt:Date.now()};
+  await window._fb.save('bot_settings',data);
+  toast('Промпт сохранён в Firebase');
+  addLog('↑ bot_settings → Firebase','lfb');
+}
+
+async function pushPromptToRailway(){
+  await savePrompt();
+  try {
+    await railwayFetch('/api/settings',{method:'POST',body:JSON.stringify({systemPrompt:$('system-prompt')?.value})});
+    toast('Промпт применён на Railway!');
+  } catch(e){toast('Firebase обновлён, Railway: '+e.message,'warn');}
+}
+
+async function saveFeatures(){
+  if(!window._fb){toast('Firebase не подключён','err');return;}
+  const data={features:{voice:$('f-voice')?.checked,photo:$('f-photo')?.checked,escalate:$('f-esc')?.checked,memory:$('f-mem')?.checked,night:$('f-night')?.checked,stage:$('f-stage')?.checked,spam:$('f-spam')?.checked},maxTokens:$('max-tokens')?.value,histLimit:$('hist-limit')?.value,replyDelay:$('reply-delay')?.value,updatedAt:Date.now()};
+  await window._fb.save('bot_settings',{...data});
+  toast('Настройки сохранены в Firebase');
+}
+
+async function saveFunctions(){
+  if(!window._fb){toast('Firebase не подключён','err');return;}
+  await window._fb.save('functions',{save_user_data:true,image:true,escalate_to_human:true,updatedAt:Date.now()});
+  toast('Функции сохранены в Firebase');
+}
+
+function saveLocalKeys(){
+  localStorage.setItem('igs_claude_key',$('claude-key-local')?.value||'');
+  localStorage.setItem('igs_model',$('claude-model-local')?.value||'');
+  toast('Ключи сохранены локально');
+  $('test-status').textContent='Готов к тестированию';
+}
+
+async function testClaudeKey(){
+  const key=localStorage.getItem('igs_claude_key')||$('claude-key-local')?.value;
+  if(!key){toast('Введи Claude API Key','warn');return;}
+  try {
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:5,messages:[{role:'user',content:'hi'}]}),
+    });
+    if(r.ok){toast('Claude API: ключ работает!');addLog('✓ Claude API key: ok','lok');}
+    else{const e=await r.json();toast('Claude: '+e.error?.message,'err');}
+  } catch(e){toast(e.message,'err');}
+}
+
+function toggleFc(name,cb){
+  const el=$('fc-'+name);if(!el)return;
+  if(cb.checked)el.className='fc '+(name==='esc'?'escalate':'enabled');
+  else el.className='fc disabled';
+  const badge=el.querySelector('.b');
+  if(badge){badge.className='b '+(cb.checked?(name==='esc'?'b-y':'b-g'):'b-r');badge.textContent=cb.checked?(name==='esc'?'Приоритет':'Активна'):'Выключена';}
+}
+
+function clearLogs(){$('log-box').innerHTML='';addLog('✓ Очищено','lok');}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function init(){
+  updateCount();
+  applyState('active');
+  // Восстанавливаем сохранённые значения
+  const railUrl=localStorage.getItem('igs_railway_url')||'';
+  if($('railway-url'))$('railway-url').value=railUrl;
+  const key=localStorage.getItem('igs_claude_key')||'';
+  if($('claude-key-local'))$('claude-key-local').value=key;
+  const model=localStorage.getItem('igs_model')||'claude-sonnet-4-20250514';
+  if($('claude-model-local'))$('claude-model-local').value=model;
+  addLog('Панель управления загружена','linf');
+  if(railUrl){
+    addLog(`Railway URL: ${railUrl}`,'linf');
+    setTimeout(checkRailway,1500);
+  } else {
+    addLog('⚠ Railway URL не указан — добавь в разделе API ключи','lwarn');
+  }
+  if(key)$('test-status').textContent='Готов к тестированию';
+}
+
+
+// ── Prompt Constructor ────────────────────────────────────────────────────────
+const CONSTRUCTOR_SYSTEM = `Ты — эксперт по созданию промптов для AI ботов в мессенджерах (WhatsApp, Telegram).
+
+Твоя задача: помочь пользователю создать идеальный промпт для его бота через диалог.
+
+ПРОЦЕСС:
+1. Задавай уточняющие вопросы по одному — узнай бизнес, продукты/услуги, цены, стиль общения, язык, что нельзя делать
+2. После 3-5 вопросов — сгенерируй готовый промпт
+3. Промпт должен быть на русском, структурированный, с разделами
+
+КОГДА ГЕНЕРИРУЕШЬ ПРОМПТ — обязательно заверши сообщение блоком:
+---ПРОМПТ---
+[здесь полный готовый промпт]
+---КОНЕЦ---
+
+Промпт должен включать:
+- Личность бота (имя, роль, компания)
+- Продукты/услуги с ценами
+- Сценарий диалога по шагам
+- Работа с возражениями
+- Запрещённые действия
+- Инструкции по языку`;
+
+let constructorHistory = [];
+
+function conAppendMsg(text, role, extract) {
+  const msgs = $('con-msgs');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.innerHTML = text.replace(/\n/g, '<br>') + `<div class="msg-meta">${now()}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  // Извлекаем промпт если есть
+  if (extract && text.includes('---ПРОМПТ---')) {
+    const match = text.match(/---ПРОМПТ---([\s\S]*?)---КОНЕЦ---/);
+    if (match) {
+      const prompt = match[1].trim();
+      if ($('con-prompt-result')) $('con-prompt-result').value = prompt;
+      toast('✓ Промпт сгенерирован — нажми "Применить к боту"!', 'info');
+      addLog('✓ Конструктор: промпт сгенерирован', 'lfb');
+    }
+  }
+}
+
+async function sendConstructorMsg() {
+  const inp = $('con-input');
+  const msg = inp.value.trim();
+  if (!msg) return;
+  const key = localStorage.getItem('igs_claude_key');
+  if (!key) { toast('Укажи Claude API Key в разделе API ключи', 'warn'); return; }
+
+  inp.value = '';
+  conAppendMsg(msg, 'user', false);
+  constructorHistory.push({ role: 'user', content: msg });
+
+  const typing = document.createElement('div');
+  typing.className = 'msg typing';
+  typing.textContent = 'Claude думает...';
+  $('con-msgs').appendChild(typing);
+  $('con-msgs').scrollTop = 99999;
+  $('con-status').textContent = 'Claude думает...';
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: localStorage.getItem('igs_model') || 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        system: CONSTRUCTOR_SYSTEM,
+        messages: constructorHistory,
+      }),
+    });
+
+    typing.remove();
+    if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message); }
+    const data = await resp.json();
+    const reply = data.content.find(b => b.type === 'text')?.text || '';
+    constructorHistory.push({ role: 'assistant', content: reply });
+    conAppendMsg(reply, 'bot', true);
+    $('con-status').textContent = `${constructorHistory.length} сообщений · готов`;
+  } catch(e) {
+    typing.remove();
+    conAppendMsg('Ошибка: ' + e.message, 'system', false);
+    $('con-status').textContent = 'Ошибка: ' + e.message;
+  }
+}
+
+function clearConstructor() {
+  constructorHistory = [];
+  $('con-msgs').innerHTML = '<div class="msg system">Чат очищен. Опиши своего бота!</div>';
+  if($('con-prompt-result')) $('con-prompt-result').value = '';
+  $('con-status').textContent = 'Опиши своего бота — Claude поможет создать промпт';
+}
+
+function startConstructor() {
+  clearConstructor();
+  $('con-input').value = '';
+  $('con-input').focus();
+}
+
+async function applyConstructorPrompt() {
+  const prompt = $('con-prompt-result')?.value?.trim();
+  if (!prompt) { toast('Сначала сгенерируй промпт в чате', 'warn'); return; }
+
+  // Сохраняем в Firebase
+  if (window._fb) {
+    await window._fb.save('bot_settings', { systemPrompt: prompt, updatedAt: Date.now() });
+  }
+
+  // Применяем на Railway
+  try {
+    await railwayFetch('/api/settings', { method: 'POST', body: JSON.stringify({ systemPrompt: prompt }) });
+    toast('✅ Промпт применён к боту!');
+    addLog('✓ Конструктор: промпт применён к боту', 'lfb');
+    // Синхронизируем с редактором промпта
+    if($('system-prompt')) $('system-prompt').value = prompt;
+  } catch(e) {
+    toast('Firebase обновлён, Railway: ' + e.message, 'warn');
+  }
+}
+
+function copyConstructorPrompt() {
+  const prompt = $('con-prompt-result')?.value;
+  if (!prompt) { toast('Нет промпта для копирования', 'warn'); return; }
+  navigator.clipboard.writeText(prompt).then(() => toast('Скопировано!'));
+}
+
+const TEMPLATES = {
+  restaurant: 'У меня ресторан в Алматы. Бот должен принимать брони столиков, отвечать на вопросы о меню и режиме работы, общаться на русском и казахском.',
+  salon: 'У меня салон красоты. Бот должен записывать клиентов на услуги, рассказывать о ценах, мастерах и акциях.',
+  realty: 'Я риелтор, продаю и сдаю квартиры в Алматы. Бот должен квалифицировать клиентов — покупка или аренда, бюджет, район, и передавать горячих лидов мне.',
+  clinic: 'У меня медицинский центр. Бот записывает на приём к врачам, отвечает на вопросы об услугах и ценах, не даёт медицинских советов.',
+  shop: 'У меня интернет-магазин одежды. Бот помогает подобрать размер, отвечает на вопросы о наличии, доставке и возврате.',
+  custom: 'Расскажи о своём бизнесе подробно...',
+};
+
+function useTemplate(type) {
+  const text = TEMPLATES[type];
+  if ($('con-input')) {
+    $('con-input').value = text;
+    if (type !== 'custom') sendConstructorMsg();
+    else $('con-input').focus();
+  }
+}
+
+// ── Token Stats ───────────────────────────────────────────────────────────────
+function fmtTokens(n) {
+  if (!n && n !== 0) return '—';
+  if (n >= 1_000_000) return (n/1_000_000).toFixed(2)+'M';
+  if (n >= 1_000)     return (n/1_000).toFixed(1)+'K';
+  return n.toString();
+}
+
+async function loadTokenStats() {
+  try {
+    const data = await railwayFetch('/api/tokens');
+    if (!data) return;
+
+    if($('tok-today'))      $('tok-today').textContent      = fmtTokens(data.today?.total);
+    if($('tok-today-cost')) $('tok-today-cost').textContent = `$${data.today?.cost_usd || '0.0000'}`;
+    if($('tok-month'))      $('tok-month').textContent      = fmtTokens(data.month?.total);
+    if($('tok-month-cost')) $('tok-month-cost').textContent = `$${data.month?.cost_usd || '0.00'} этот месяц`;
+    if($('tok-calls'))      $('tok-calls').textContent      = data.total?.calls || 0;
+
+    const pct = data.limit?.used_pct || 0;
+    const bar = $('tok-progress-bar');
+    if(bar) {
+      bar.style.width = pct + '%';
+      bar.style.background = pct > 80 ? 'var(--danger)' : pct > 60 ? 'var(--warn)' : 'var(--accent)';
+    }
+    if($('tok-limit-pct'))      $('tok-limit-pct').textContent  = pct + '%';
+    if($('tok-limit-sub'))      $('tok-limit-sub').textContent  = `из ${fmtTokens(data.limit?.monthly_tokens)}`;
+    if($('tok-progress-label')) $('tok-progress-label').textContent =
+      `${fmtTokens(data.limit?.used_tokens)} / ${fmtTokens(data.limit?.monthly_tokens)}`;
+    if($('tok-limit-input'))    $('tok-limit-input').placeholder = data.limit?.monthly_tokens || 1000000;
+
+    addLog(`✓ Токены: сегодня ${fmtTokens(data.today?.total)} · месяц $${data.month?.cost_usd}`, 'linf');
+  } catch(e) {
+    addLog(`⚠ Токены: ${e.message}`, 'lwarn');
+  }
+}
+
+async function setTokenLimit() {
+  const val = parseInt($('tok-limit-input')?.value);
+  if (!val || val < 1000) { toast('Введи лимит (минимум 1000)','warn'); return; }
+  try {
+    await railwayFetch('/api/tokens/limit', { method:'POST', body: JSON.stringify({ limit: val }) });
+    toast(`Лимит установлен: ${fmtTokens(val)} токенов/мес`);
+    loadTokenStats();
+  } catch(e) { toast('Railway: '+e.message,'err'); }
+}
+
+// Загружаем токены вместе с дашбордом
+const _origInit = init;
+window.init = function() {
+  _origInit();
+  setTimeout(loadTokenStats, 2000);
+};
+
+// ── Learning System ───────────────────────────────────────────────────────────
+let _selectedRating = null;
+
+function selectRating(r) {
+  _selectedRating = r;
+  const pos = $('btn-pos'), neg = $('btn-neg');
+  if (r === 'positive') {
+    pos.style.cssText = 'flex:1;justify-content:center;background:rgba(37,211,102,.25);color:var(--accent);border:2px solid var(--accent);';
+    neg.style.cssText = 'flex:1;justify-content:center;background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.3);';
+  } else {
+    neg.style.cssText = 'flex:1;justify-content:center;background:rgba(239,68,68,.25);color:var(--danger);border:2px solid var(--danger);';
+    pos.style.cssText = 'flex:1;justify-content:center;background:rgba(37,211,102,.1);color:var(--accent);border:1px solid rgba(37,211,102,.3);';
+  }
+}
+
+async function submitFeedback() {
+  if (!_selectedRating) { toast('Выбери оценку — ✅ или ❌','warn'); return; }
+  const comment = $('fb-comment')?.value?.trim();
+  if (!comment) { toast('Напиши объяснение','warn'); return; }
+  try {
+    await railwayFetch('/api/feedback', {
+      method: 'POST',
+      body: JSON.stringify({
+        chatId:  $('fb-chatid')?.value?.trim() || 'manual',
+        rating:  _selectedRating,
+        comment,
+        example: $('fb-example')?.value?.trim() || '',
+      }),
+    });
+    toast(_selectedRating === 'positive' ? '✅ Оценка сохранена — бот учится!' : '❌ Ошибка зафиксирована — бот не повторит!');
+    addLog(`✓ Feedback [${_selectedRating}]: "${comment.slice(0,50)}"`, 'lfb');
+    $('fb-comment').value = '';
+    $('fb-example').value = '';
+    $('fb-chatid').value  = '';
+    _selectedRating = null;
+    if($('btn-pos'))$('btn-pos').style.cssText='flex:1;justify-content:center;background:rgba(37,211,102,.1);color:var(--accent);border:1px solid rgba(37,211,102,.3);';
+    if($('btn-neg'))$('btn-neg').style.cssText='flex:1;justify-content:center;background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.3);';
+    loadFeedbackList();
+    loadFeedbackStats();
+  } catch(e) { toast('Railway: '+e.message,'err'); }
+}
+
+async function loadFeedbackList() {
+  const el = $('feedback-list'); if(!el) return;
+  try {
+    const data = await railwayFetch('/api/feedback?limit=20');
+    if (!data.length) { el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:12px 0;">Оценок пока нет</div>'; return; }
+    el.innerHTML = data.map(f => `
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:0.5px solid var(--color-border-tertiary);">
+        <div style="font-size:18px;flex-shrink:0;">${f.rating==='positive'?'✅':'❌'}</div>
+        <div style="flex:1;">
+          <div style="font-size:13.5px;font-weight:600;color:var(--color-text-primary);">${f.comment||'—'}</div>
+          ${f.example?`<div style="font-size:12px;color:var(--muted);margin-top:3px;font-family:'JetBrains Mono',monospace;">"${f.example}"</div>`:''}
+          <div style="font-size:11.5px;color:var(--muted);margin-top:4px;">${f.chatId||''} · ${fmtTime(f.createdAt)}</div>
+        </div>
+        <button onclick="deleteFeedback('${f.id}')" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:16px;padding:4px;flex-shrink:0;">×</button>
+      </div>`).join('');
+  } catch(e) {
+    el.innerHTML=`<div style="color:var(--muted);font-size:13px;">Укажи Railway URL</div>`;
+  }
+}
+
+async function deleteFeedback(id) {
+  try {
+    await railwayFetch(`/api/feedback/${id}`, { method:'DELETE' });
+    toast('Оценка удалена','info');
+    loadFeedbackList();
+    loadFeedbackStats();
+  } catch(e) { toast(e.message,'err'); }
+}
+
+async function loadFeedbackStats() {
+  try {
+    const data = await railwayFetch('/api/stats');
+    if($('fb-total'))$('fb-total').textContent = data.feedback_total||0;
+    if($('fb-pos'))$('fb-pos').textContent     = data.feedback_positive||0;
+    if($('fb-neg'))$('fb-neg').textContent     = data.feedback_negative||0;
+    if($('nav-feedback-cnt'))$('nav-feedback-cnt').textContent = data.feedback_total||0;
+  } catch(e) { /* тихо */ }
+}
+
+async function loadErrorPatterns() {
+  const el = $('error-patterns-list'); if(!el) return;
+  try {
+    const data = await railwayFetch('/api/error-patterns');
+    if (!data.length) { el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:8px 0;">Ошибок не обнаружено</div>'; return; }
+    el.innerHTML = data.map(p => `
+      <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:0.5px solid var(--color-border-tertiary);">
+        <div style="width:32px;height:32px;border-radius:50%;background:rgba(245,158,11,.12);color:var(--warn);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">${p.count}</div>
+        <div style="flex:1;font-size:13px;">${p.description}</div>
+        <button onclick="deletePattern('${p.id}')" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:14px;">×</button>
+      </div>`).join('');
+  } catch(e) {
+    el.innerHTML=`<div style="color:var(--muted);font-size:13px;">Укажи Railway URL</div>`;
+  }
+}
+
+async function deletePattern(id) {
+  try { await railwayFetch(`/api/error-patterns/${id}`,{method:'DELETE'}); toast('Паттерн сброшен'); loadErrorPatterns(); }
+  catch(e) { toast(e.message,'err'); }
+}
+
+async function previewPrompt() {
+  const card = $('prompt-preview-card');
+  const pre  = $('prompt-preview-text');
+  try {
+    const data = await railwayFetch('/api/prompt-preview');
+    pre.textContent = data.prompt;
+    card.style.display = 'block';
+    card.scrollIntoView({ behavior: 'smooth' });
+    toast(`Промпт: ${data.length} символов`,'info');
+  } catch(e) { toast('Railway: '+e.message,'err'); }
+}
+
+// Загружаем данные при открытии раздела обучения
+const _origGo = go;
+window.go = function(name, btn) {
+  _origGo(name, btn);
+  if (name === 'learning') {
+    loadFeedbackList();
+    loadFeedbackStats();
+    loadErrorPatterns();
+  }
+};
+
+// Кнопка оценки в разделе диалогов — устанавливаем chatId автоматически
+function openDialogWithFeedback(chatId, el) {
+  openDialog(chatId, el);
+  if($('fb-chatid')) $('fb-chatid').value = chatId;
+}
+
+init();
+</script>
+</body>
+</html>

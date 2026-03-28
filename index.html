@@ -951,9 +951,11 @@ function toast(msg,type){
 function go(name,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(b=>b.classList.remove('active'));
-  $('page-'+name).classList.add('active');
+  const page = $('page-'+name);
+  if(page) page.classList.add('active');
   if(btn)btn.classList.add('active');
 }
+window.go = go;
 function updateCount(){const el=$('system-prompt');if(el&&$('char-count'))$('char-count').textContent=el.value.length;}
 function setFb(ok){
   const d=$('fb-dot'),t=$('fb-txt'),bt=$('fb-bar-txt'),btt=$('fb-bar-time');
@@ -1584,11 +1586,15 @@ async function setBalLimit() {
   } catch(e){toast(e.message,'err');}
 }
 
-// Загрузка при открытии раздела правил
-const _origGoRules = window.go || function(){};
-const _prevGo = window.go;
+// Единый обработчик навигации (rules + learning)
+const _goOriginal = window.go;
 window.go = function(name, btn) {
-  if(_prevGo) _prevGo(name, btn);
+  _goOriginal(name, btn);
+  if(name === 'learning') {
+    loadFeedbackList();
+    loadFeedbackStats();
+    loadErrorPatterns();
+  }
   if(name === 'rules') {
     loadRules();
     loadBalanceStats();
@@ -1730,89 +1736,7 @@ function useTemplate(type) {
   }
 }
 
-let constructorHistory = [];
-
-function conAppendMsg(text, role, extract) {
-  const msgs = $('con-msgs');
-  const div = document.createElement('div');
-  div.className = 'msg ' + role;
-  div.innerHTML = text.replace(/\n/g, '<br>') + `<div class="msg-meta">${now()}</div>`;
-  msgs.appendChild(div);
-  msgs.scrollTop = msgs.scrollHeight;
-
-  // Извлекаем промпт если есть
-  if (extract && text.includes('---ПРОМПТ---')) {
-    const match = text.match(/---ПРОМПТ---([\s\S]*?)---КОНЕЦ---/);
-    if (match) {
-      const prompt = match[1].trim();
-      if ($('con-prompt-result')) $('con-prompt-result').value = prompt;
-      toast('✓ Промпт сгенерирован — нажми "Применить к боту"!', 'info');
-      addLog('✓ Конструктор: промпт сгенерирован', 'lfb');
-    }
-  }
-}
-
-async function sendConstructorMsg() {
-  const inp = $('con-input');
-  const msg = inp.value.trim();
-  if (!msg) return;
-  const key = localStorage.getItem('igs_claude_key');
-  if (!key) { toast('Укажи Claude API Key в разделе API ключи', 'warn'); return; }
-
-  inp.value = '';
-  conAppendMsg(msg, 'user', false);
-  constructorHistory.push({ role: 'user', content: msg });
-
-  const typing = document.createElement('div');
-  typing.className = 'msg typing';
-  typing.textContent = 'Claude думает...';
-  $('con-msgs').appendChild(typing);
-  $('con-msgs').scrollTop = 99999;
-  $('con-status').textContent = 'Claude думает...';
-
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: localStorage.getItem('igs_model') || 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
-        system: CONSTRUCTOR_SYSTEM,
-        messages: constructorHistory,
-      }),
-    });
-
-    typing.remove();
-    if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message); }
-    const data = await resp.json();
-    const reply = data.content.find(b => b.type === 'text')?.text || '';
-    constructorHistory.push({ role: 'assistant', content: reply });
-    conAppendMsg(reply, 'bot', true);
-    $('con-status').textContent = `${constructorHistory.length} сообщений · готов`;
-  } catch(e) {
-    typing.remove();
-    conAppendMsg('Ошибка: ' + e.message, 'system', false);
-    $('con-status').textContent = 'Ошибка: ' + e.message;
-  }
-}
-
-function clearConstructor() {
-  constructorHistory = [];
-  $('con-msgs').innerHTML = '<div class="msg system">Чат очищен. Опиши своего бота!</div>';
-  if($('con-prompt-result')) $('con-prompt-result').value = '';
-  $('con-status').textContent = 'Опиши своего бота — Claude поможет создать промпт';
-}
-
-function startConstructor() {
-  clearConstructor();
-  $('con-input').value = '';
-  $('con-input').focus();
-}
+// (дубликат конструктора удалён)
 
 async function applyConstructorPrompt() {
   const prompt = $('con-prompt-result')?.value?.trim();
@@ -2028,15 +1952,7 @@ async function previewPrompt() {
 }
 
 // Загружаем данные при открытии раздела обучения
-const _origGo = go;
-window.go = function(name, btn) {
-  _origGo(name, btn);
-  if (name === 'learning') {
-    loadFeedbackList();
-    loadFeedbackStats();
-    loadErrorPatterns();
-  }
-};
+// (объединено с go из rules — см. ниже единый window.go)
 
 // Кнопка оценки в разделе диалогов — устанавливаем chatId автоматически
 function openDialogWithFeedback(chatId, el) {

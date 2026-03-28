@@ -1736,53 +1736,6 @@ function useTemplate(type) {
   }
 }
 
-// (дубликат конструктора удалён)
-
-async function applyConstructorPrompt() {
-  const prompt = $('con-prompt-result')?.value?.trim();
-  if (!prompt) { toast('Сначала сгенерируй промпт в чате', 'warn'); return; }
-
-  // Сохраняем в Firebase
-  if (window._fb) {
-    await window._fb.save('bot_settings', { systemPrompt: prompt, updatedAt: Date.now() });
-  }
-
-  // Применяем на Railway
-  try {
-    await railwayFetch('/api/settings', { method: 'POST', body: JSON.stringify({ systemPrompt: prompt }) });
-    toast('✅ Промпт применён к боту!');
-    addLog('✓ Конструктор: промпт применён к боту', 'lfb');
-    // Синхронизируем с редактором промпта
-    if($('system-prompt')) $('system-prompt').value = prompt;
-  } catch(e) {
-    toast('Firebase обновлён, Railway: ' + e.message, 'warn');
-  }
-}
-
-function copyConstructorPrompt() {
-  const prompt = $('con-prompt-result')?.value;
-  if (!prompt) { toast('Нет промпта для копирования', 'warn'); return; }
-  navigator.clipboard.writeText(prompt).then(() => toast('Скопировано!'));
-}
-
-const TEMPLATES = {
-  restaurant: 'У меня ресторан в Алматы. Бот должен принимать брони столиков, отвечать на вопросы о меню и режиме работы, общаться на русском и казахском.',
-  salon: 'У меня салон красоты. Бот должен записывать клиентов на услуги, рассказывать о ценах, мастерах и акциях.',
-  realty: 'Я риелтор, продаю и сдаю квартиры в Алматы. Бот должен квалифицировать клиентов — покупка или аренда, бюджет, район, и передавать горячих лидов мне.',
-  clinic: 'У меня медицинский центр. Бот записывает на приём к врачам, отвечает на вопросы об услугах и ценах, не даёт медицинских советов.',
-  shop: 'У меня интернет-магазин одежды. Бот помогает подобрать размер, отвечает на вопросы о наличии, доставке и возврате.',
-  custom: 'Расскажи о своём бизнесе подробно...',
-};
-
-function useTemplate(type) {
-  const text = TEMPLATES[type];
-  if ($('con-input')) {
-    $('con-input').value = text;
-    if (type !== 'custom') sendConstructorMsg();
-    else $('con-input').focus();
-  }
-}
-
 // ── Token Stats ───────────────────────────────────────────────────────────────
 function fmtTokens(n) {
   if (!n && n !== 0) return '—';

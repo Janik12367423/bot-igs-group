@@ -207,7 +207,29 @@ const app=initializeApp({
   appId:"1:160461403127:web:1819c36739b7e0586a74f2"
 });
 const db=getDatabase(app);
-onValue(ref(db,'leads'),snap=>{window._fbLeads=snap.val();updateAll(snap.val());setFb(true);addLog('↺ Firebase: заявки синхронизированы','lfb');},()=>{setFb(false);addLog('✗ Firebase: ошибка','lerr');});
+
+// Таймаут — если Firebase не подключился за 5 сек, показываем ошибку
+const _fbTimeout = setTimeout(() => {
+  const bt = document.getElementById('fb-bar-txt');
+  if(bt && bt.textContent.includes('Подключение')) {
+    bt.textContent = 'Firebase: нет доступа — проверь Rules в консоли';
+    bt.style.color = 'var(--warn)';
+    addLog('⚠ Firebase: таймаут — открой консоль Firebase → Realtime Database → Rules → установи read:true', 'lwarn');
+  }
+}, 5000);
+
+onValue(ref(db,'leads'),snap=>{
+  clearTimeout(_fbTimeout);
+  window._fbLeads=snap.val();
+  updateAll(snap.val());
+  setFb(true);
+  addLog('↺ Firebase: заявки синхронизированы','lfb');
+},()=>{
+  clearTimeout(_fbTimeout);
+  setFb(false);
+  addLog('✗ Firebase: ошибка доступа — нужно открыть Rules','lerr');
+});
+
 onValue(ref(db,'bot_settings'),snap=>{
   const s=snap.val();if(!s)return;
   if(s.systemPrompt){const e=document.getElementById('system-prompt');if(e)e.value=s.systemPrompt;}
@@ -943,12 +965,20 @@ function setFb(ok){
 
 // ── Railway API ───────────────────────────────────────────────────────────────
 function getRailwayUrl(){ return (localStorage.getItem('igs_railway_url')||'').replace(/\/$/,''); }
-function saveRailwayUrl(){ localStorage.setItem('igs_railway_url',$('railway-url')?.value||''); }
+function saveRailwayUrl(){
+  const val = $('railway-url')?.value||'';
+  localStorage.setItem('igs_railway_url', val);
+  if(val) checkRailway();
+}
 
 async function railwayFetch(path, opts={}){
   const base = getRailwayUrl();
-  if(!base) throw new Error('Railway URL не указан');
-  const res = await fetch(base+path, { headers:{'Content-Type':'application/json'}, ...opts });
+  if(!base) throw new Error('VPS URL не указан');
+  const res = await fetch(base+path, {
+    headers:{'Content-Type':'application/json','Accept':'application/json'},
+    mode: 'cors',
+    ...opts
+  });
   if(!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -1379,21 +1409,30 @@ function clearLogs(){$('log-box').innerHTML='';addLog('✓ Очищено','lok'
 function init(){
   updateCount();
   applyState('active');
+
   // Восстанавливаем сохранённые значения
-  const railUrl=localStorage.getItem('igs_railway_url')||'';
-  if($('railway-url'))$('railway-url').value=railUrl;
-  const key=localStorage.getItem('igs_claude_key')||'';
-  if($('claude-key-local'))$('claude-key-local').value=key;
-  const model=localStorage.getItem('igs_model')||'claude-sonnet-4-20250514';
-  if($('claude-model-local'))$('claude-model-local').value=model;
-  addLog('Панель управления загружена','linf');
-  if(railUrl){
-    addLog(`Railway URL: ${railUrl}`,'linf');
-    setTimeout(checkRailway,1500);
-  } else {
-    addLog('⚠ Railway URL не указан — добавь в разделе API ключи','lwarn');
+  const railUrl = localStorage.getItem('igs_railway_url') || 'http://45.136.58.180:3001';
+  if($('railway-url')) $('railway-url').value = railUrl;
+  if(railUrl) localStorage.setItem('igs_railway_url', railUrl);
+
+  const key = localStorage.getItem('igs_claude_key') || '';
+  if($('claude-key-local')) $('claude-key-local').value = key;
+
+  const model = localStorage.getItem('igs_model') || 'claude-sonnet-4-20250514';
+  if($('claude-model-local')) $('claude-model-local').value = model;
+
+  addLog('Панель управления загружена · VPS: ' + railUrl, 'linf');
+
+  // Автоподключение к VPS через 1 сек
+  if(railUrl) {
+    addLog('↺ Подключение к VPS...', 'linf');
+    setTimeout(checkRailway, 1000);
   }
-  if(key)$('test-status').textContent='Готов к тестированию';
+
+  if(key) if($('test-status')) $('test-status').textContent = 'Готов к тестированию';
+
+  // Обновляем токены через 3 сек
+  setTimeout(() => { if(typeof loadTokenStats === 'function') loadTokenStats(); }, 3000);
 }
 
 

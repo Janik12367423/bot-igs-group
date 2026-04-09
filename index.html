@@ -320,6 +320,10 @@ window._fb={
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       Обучение<span class="ni-badge b b-p" id="nav-feedback-cnt">0</span>
     </button>
+    <button class="ni" onclick="go('reports',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Отчётность<span class="ni-badge b b-t" id="nav-reports-badge" style="display:none">!</span>
+    </button>
     <button class="ni" onclick="go('logs',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       Логи
@@ -713,19 +717,40 @@ window._fb={
     <div class="frow">
       <div class="field">
         <label>Задержка ответа (мс)</label>
-        <input type="number" value="1500" id="reply-delay" min="0" max="10000">
-        <div class="fhint">Минимальная пауза перед ответом. 1500 = 1.5 секунды. 0 = мгновенно</div>
+        <input type="number" value="1500" id="reply-delay" min="0" max="15000" oninput="updateDelayLabel()">
+        <div class="fhint" id="delay-hint">Пауза 1.5 сек перед ответом — выглядит естественно</div>
       </div>
       <div class="field">
         <label style="display:flex;align-items:center;gap:8px;">
           <input type="checkbox" id="dynamic-delay">
           Динамическая задержка (имитация набора текста)
         </label>
-        <div class="fhint">Бот будет "печатать" дольше для длинных сообщений — выглядит как живой человек. Дополнительно +50мс на каждый символ (макс. 8 сек)</div>
+        <div class="fhint">+50мс на каждый символ ответа, макс. 8 сек — бот "печатает" как живой человек</div>
       </div>
       <div class="field"><label>Антиспам порог (мс)</label><input type="text" value="2000" id="spam-ms"></div>
     </div>
-    <div class="brow"><button class="btn btn-p" onclick="saveFeatures()">Сохранить</button></div>
+    <div class="divider"></div>
+    <div class="ct">🎩 Тональность и официальность</div>
+    <div class="field">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <label style="margin:0;">Уровень официальности</label>
+        <span style="font-size:13px;font-weight:700;color:var(--accent);" id="formality-val">30%</span>
+      </div>
+      <input type="range" id="formality-slider" min="0" max="100" value="30" step="5"
+        oninput="updateFormalityLabel(this.value)"
+        style="width:100%;accent-color:var(--accent);cursor:pointer;">
+      <div style="margin-top:8px;padding:10px 13px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--accent);">
+        <div style="font-size:13px;font-weight:600;color:var(--text);" id="formality-label">Дружелюбный</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px;" id="formality-desc">Тёплый, живой стиль — хороший менеджер в WhatsApp</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:6px;padding:0 2px;">
+        <span>😊 Неформально</span><span>🤝 Дружелюбно</span><span>💼 Официально</span><span>🎩 Строго</span>
+      </div>
+    </div>
+    <div class="brow">
+      <button class="btn btn-p" onclick="saveFeatures()">Сохранить</button>
+      <button class="btn btn-g" onclick="saveFormalityOnly()">Применить тональность →</button>
+    </div>
   </div>
 </div>
 
@@ -923,6 +948,187 @@ window._fb={
   </div>
 </div>
 
+<!-- ══ REPORTS ══ -->
+<div class="page" id="page-reports">
+  <div class="ph">
+    <div class="ph-title">📊 Отчётность бота</div>
+    <div class="ph-sub">Статистика диалогов, лидов и токенов</div>
+  </div>
+
+  <!-- Период -->
+  <div class="card" style="margin-bottom:14px;">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:160px;">
+        <label>От</label>
+        <input type="date" id="rep-from" style="width:100%;">
+      </div>
+      <div style="flex:1;min-width:160px;">
+        <label>До</label>
+        <input type="date" id="rep-to" style="width:100%;">
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-self:flex-end;padding-bottom:1px;">
+        <button class="btn btn-g" onclick="setRepPeriod(7)">7 дней</button>
+        <button class="btn btn-g" onclick="setRepPeriod(30)">30 дней</button>
+        <button class="btn btn-p" onclick="loadReports()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Обновить
+        </button>
+        <button class="btn btn-g" onclick="exportReportCSV()" title="Скачать CSV">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          CSV
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Вкладки внутри отчётности -->
+  <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
+    <button id="rtab-main"  class="btn btn-p"  style="font-size:12px;padding:6px 14px;" onclick="switchRepTab('main')">📊 Общее</button>
+    <button id="rtab-leads" class="btn btn-g"  style="font-size:12px;padding:6px 14px;" onclick="switchRepTab('leads')">🔥 Заявки</button>
+    <button id="rtab-meas"  class="btn btn-g"  style="font-size:12px;padding:6px 14px;" onclick="switchRepTab('meas')">📐 Замеры</button>
+    <button id="rtab-show"  class="btn btn-g"  style="font-size:12px;padding:6px 14px;" onclick="switchRepTab('show')">🏠 Шоурум</button>
+    <button id="rtab-media" class="btn btn-g"  style="font-size:12px;padding:6px 14px;" onclick="switchRepTab('media')">📸 Медиа</button>
+    <button id="rtab-conv"  class="btn btn-g"  style="font-size:12px;padding:6px 14px;" onclick="switchRepTab('conv')">💬 Диалоги</button>
+  </div>
+
+  <!-- ═══ ВКЛАДКА: ОБЩЕЕ ═══ -->
+  <div id="reptab-main">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px;">
+      <div class="sc"><div class="sc-label">Входящих сообщений</div><div class="sc-val" id="rep-msgs-in">—</div><div class="sc-sub">за период</div></div>
+      <div class="sc"><div class="sc-label">Ответов бота</div><div class="sc-val" id="rep-msgs-out">—</div><div class="sc-sub">за период</div></div>
+      <div class="sc"><div class="sc-label">Лидов сохранено</div><div class="sc-val" id="rep-leads">—</div><div class="sc-sub">за период</div></div>
+      <div class="sc"><div class="sc-label">Горячих + Тёплых</div><div class="sc-val" style="color:var(--danger)" id="rep-hot">—</div><div class="sc-sub">качественных лидов</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;">
+      <div class="sc"><div class="sc-label">📐 Запросов замера</div><div class="sc-val" style="color:var(--info)" id="rep-measures">—</div><div class="sc-sub">назвали время</div></div>
+      <div class="sc"><div class="sc-label">🏠 Встреч в шоуруме</div><div class="sc-val" style="color:var(--teal)" id="rep-showroom">—</div><div class="sc-sub">записано</div></div>
+      <div class="sc"><div class="sc-label">📞 Передано менеджеру</div><div class="sc-val" style="color:var(--warn)" id="rep-escalated">—</div><div class="sc-sub">эскалаций</div></div>
+      <div class="sc"><div class="sc-label">Конверсия в лид</div><div class="sc-val" style="color:var(--accent)" id="rep-conv">—</div><div class="sc-sub">лиды / входящих</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;">
+      <div class="sc"><div class="sc-label">🔁 Follow-up</div><div class="sc-val" style="color:var(--purple)" id="rep-followup">—</div><div class="sc-sub">авто-напоминаний</div></div>
+      <div class="sc"><div class="sc-label">🌙 Ночных сообщений</div><div class="sc-val" style="color:var(--muted)" id="rep-night">—</div><div class="sc-sub">вне рабочих часов</div></div>
+      <div class="sc"><div class="sc-label">🚫 Отказов</div><div class="sc-val" style="color:var(--danger)" id="rep-refused">—</div><div class="sc-sub">"не интересует"</div></div>
+      <div class="sc"><div class="sc-label">📸 Прислали фото</div><div class="sc-val" style="color:var(--info)" id="rep-photos">—</div><div class="sc-sub">за период</div></div>
+    </div>
+  </div>
+
+  <!-- ═══ ВКЛАДКА: ЗАЯВКИ ═══ -->
+  <div id="reptab-leads" style="display:none;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;">
+      <div class="sc"><div class="sc-label">Всего заявок</div><div class="sc-val" id="rep2-total">—</div><div class="sc-sub">за период</div></div>
+      <div class="sc"><div class="sc-label">🔥 Горячих</div><div class="sc-val" style="color:#ef4444" id="rep2-hot">—</div><div class="sc-sub">готовы к замеру</div></div>
+      <div class="sc"><div class="sc-label">🌡 Тёплых</div><div class="sc-val" style="color:#f59e0b" id="rep2-warm">—</div><div class="sc-sub">интересуются</div></div>
+      <div class="sc"><div class="sc-label">❄️ Холодных</div><div class="sc-val" style="color:#60a5fa" id="rep2-cold">—</div><div class="sc-sub">на этапе изучения</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+      <div class="card" style="margin-bottom:0;">
+        <div class="ct">📅 Заявки по дням</div>
+        <canvas id="rep-chart-leads-days" height="200"></canvas>
+      </div>
+      <div class="card" style="margin-bottom:0;">
+        <div class="ct">🏗 По типу конструкции</div>
+        <canvas id="rep-chart-products" height="200"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Воронка заявок</div>
+      <div id="rep-funnel" style="display:flex;flex-direction:column;gap:8px;padding:4px 0;"></div>
+    </div>
+  </div>
+
+  <!-- ═══ ВКЛАДКА: ЗАМЕРЫ ═══ -->
+  <div id="reptab-meas" style="display:none;">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;">
+      <div class="sc"><div class="sc-label">📐 Запросов замера</div><div class="sc-val" style="color:var(--info)" id="rep3-measures">—</div><div class="sc-sub">за период</div></div>
+      <div class="sc"><div class="sc-label">📞 Эскалаций под замер</div><div class="sc-val" style="color:var(--warn)" id="rep3-escm">—</div><div class="sc-sub">передано менеджеру</div></div>
+      <div class="sc"><div class="sc-label">% из горячих</div><div class="sc-val" style="color:var(--accent)" id="rep3-pct">—</div><div class="sc-sub">горячие → замер</div></div>
+    </div>
+    <div class="card">
+      <div class="ct">📅 Замеры по дням</div>
+      <canvas id="rep-chart-meas-days" height="200"></canvas>
+    </div>
+    <div class="card">
+      <div class="ct">📋 Список запросов замера</div>
+      <div id="rep-meas-list" style="max-height:360px;overflow-y:auto;"></div>
+    </div>
+  </div>
+
+  <!-- ═══ ВКЛАДКА: ШОУРУМ ═══ -->
+  <div id="reptab-show" style="display:none;">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;">
+      <div class="sc"><div class="sc-label">🏠 Встреч в шоуруме</div><div class="sc-val" style="color:var(--teal)" id="rep4-total">—</div><div class="sc-sub">за период</div></div>
+      <div class="sc"><div class="sc-label">% конверсии</div><div class="sc-val" style="color:var(--accent)" id="rep4-pct">—</div><div class="sc-sub">из всех лидов</div></div>
+      <div class="sc"><div class="sc-label">Follow-up после шоурума</div><div class="sc-val" style="color:var(--purple)" id="rep4-fu">—</div><div class="sc-sub">напоминаний</div></div>
+    </div>
+    <div class="card">
+      <div class="ct">📅 Записи в шоурум по дням</div>
+      <canvas id="rep-chart-show-days" height="200"></canvas>
+    </div>
+    <div class="card">
+      <div class="ct">📋 Список записей в шоурум</div>
+      <div id="rep-show-list" style="max-height:360px;overflow-y:auto;"></div>
+    </div>
+  </div>
+
+  <!-- ═══ ВКЛАДКА: МЕДИА ═══ -->
+  <div id="reptab-media" style="display:none;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;">
+      <div class="sc"><div class="sc-label">📸 Фото от клиентов</div><div class="sc-val" style="color:var(--info)" id="rep5-photos">—</div><div class="sc-sub">за период</div></div>
+      <div class="sc"><div class="sc-label">🎙 Голосовых</div><div class="sc-val" style="color:var(--purple)" id="rep5-voice">—</div><div class="sc-sub">аудиосообщений</div></div>
+      <div class="sc"><div class="sc-label">🌙 Ночных</div><div class="sc-val" style="color:var(--muted)" id="rep5-night">—</div><div class="sc-sub">вне рабочих часов</div></div>
+      <div class="sc"><div class="sc-label">🚫 Отказов</div><div class="sc-val" style="color:var(--danger)" id="rep5-refused">—</div><div class="sc-sub">"не интересует"</div></div>
+    </div>
+    <div class="card">
+      <div class="ct">📊 Активность по типам сообщений</div>
+      <canvas id="rep-chart-media" height="220"></canvas>
+    </div>
+  </div>
+
+  <!-- ═══ ВКЛАДКА: ДИАЛОГИ ═══ -->
+  <div id="reptab-conv" style="display:none;">
+
+  <!-- Charts in main tab -->
+  <div id="rep-main-charts">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+      <div class="card" style="margin-bottom:0;">
+        <div class="ct">📈 Активность по дням</div>
+        <canvas id="rep-chart-days" height="200"></canvas>
+      </div>
+      <div class="card" style="margin-bottom:0;">
+        <div class="ct">💰 Токены по дням</div>
+        <canvas id="rep-chart-tokens" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Топ диалоги (вкладка Диалоги) -->
+
+  </div><!-- /reptab-conv -->
+
+  <!-- Лог событий — всегда виден -->
+  <div class="card">
+    <div class="ct" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:7px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Лог событий
+      </span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <select id="rep-event-filter" onchange="filterRepEvents()" style="padding:4px 8px;font-size:12px;width:auto;">
+          <option value="">Все события</option>
+          <option value="message_in">Входящие</option>
+          <option value="message_out">Ответы</option>
+          <option value="lead_saved">Лиды</option>
+          <option value="escalated">Эскалации</option>
+          <option value="showroom_booked">Шоурум</option>
+        </select>
+        <button class="btn btn-g" style="padding:4px 10px;font-size:11px;" onclick="loadReportDay()">За сегодня</button>
+      </div>
+    </div>
+    <div id="rep-events-list" style="max-height:340px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8;"></div>
+  </div>
+</div>
+
 </main>
 </div>
 
@@ -951,11 +1157,9 @@ function toast(msg,type){
 function go(name,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(b=>b.classList.remove('active'));
-  const page = $('page-'+name);
-  if(page) page.classList.add('active');
+  $('page-'+name).classList.add('active');
   if(btn)btn.classList.add('active');
 }
-window.go = go;
 function updateCount(){const el=$('system-prompt');if(el&&$('char-count'))$('char-count').textContent=el.value.length;}
 function setFb(ok){
   const d=$('fb-dot'),t=$('fb-txt'),bt=$('fb-bar-txt'),btt=$('fb-bar-time');
@@ -1363,9 +1567,49 @@ async function pushPromptToRailway(){
   } catch(e){toast('Firebase обновлён, Railway: '+e.message,'warn');}
 }
 
+// ── Задержка — подсказка ──────────────────────────────────────────────────────
+function updateDelayLabel() {
+  const v = parseInt($('reply-delay')?.value || 1500);
+  const el = $('delay-hint');
+  if (!el) return;
+  if (v === 0) el.textContent = 'Мгновенный ответ — выглядит как бот';
+  else if (v < 500) el.textContent = `Пауза ${v}мс — очень быстро`;
+  else if (v < 2000) el.textContent = `Пауза ${(v/1000).toFixed(1)} сек — естественно`;
+  else if (v < 5000) el.textContent = `Пауза ${(v/1000).toFixed(1)} сек — медленнее, как реальный человек`;
+  else el.textContent = `Пауза ${(v/1000).toFixed(1)} сек — очень медленно`;
+}
+
+// ── Официальность — регулятор ─────────────────────────────────────────────────
+const FORMALITY_LEVELS = [
+  { max:  20, label: 'Неформальный',       desc: '"Привет! Расскажи что хочешь сделать 😊" — как друг', color: '#25d366' },
+  { max:  40, label: 'Дружелюбный',        desc: 'Тёплый, живой стиль — хороший менеджер в WhatsApp', color: '#25d366' },
+  { max:  60, label: 'Сбалансированный',   desc: 'Вежливо, тепло, профессионально — стандарт WhatsApp', color: '#60a5fa' },
+  { max:  80, label: 'Официально-вежливый',desc: 'Строгое "Вы", деловой стиль, минимум эмодзи', color: '#f59e0b' },
+  { max: 100, label: 'Строго официальный', desc: 'Деловые письма, никаких эмодзи, максимальный формализм', color: '#ef4444' },
+];
+
+function updateFormalityLabel(val) {
+  val = parseInt(val);
+  if ($('formality-val')) $('formality-val').textContent = val + '%';
+  const level = FORMALITY_LEVELS.find(l => val <= l.max) || FORMALITY_LEVELS[4];
+  if ($('formality-label')) { $('formality-label').textContent = level.label; $('formality-label').style.color = level.color; }
+  if ($('formality-desc'))  $('formality-desc').textContent = level.desc;
+  // Красим слайдер
+  const slider = $('formality-slider');
+  if (slider) slider.style.accentColor = level.color;
+}
+
+async function saveFormalityOnly() {
+  const val = parseInt($('formality-slider')?.value ?? 30);
+  try {
+    await railwayFetch('/api/settings', { method:'POST', body: JSON.stringify({ formality: val }) });
+    toast(`✓ Тональность применена: ${FORMALITY_LEVELS.find(l=>val<=l.max)?.label || val+'%'}`);
+  } catch(e) { toast('Ошибка применения', 'err'); }
+}
+
 async function saveFeatures(){
   if(!window._fb){toast('Firebase не подключён','err');return;}
-  const data={features:{voice:$('f-voice')?.checked,photo:$('f-photo')?.checked,escalate:$('f-esc')?.checked,memory:$('f-mem')?.checked,night:$('f-night')?.checked,stage:$('f-stage')?.checked,spam:$('f-spam')?.checked},maxTokens:$('max-tokens')?.value,histLimit:$('hist-limit')?.value,replyDelay:$('reply-delay')?.value,dynamicDelay:$('dynamic-delay')?.checked||false,typingSpeed:50,updatedAt:Date.now()};
+  const data={features:{voice:$('f-voice')?.checked,photo:$('f-photo')?.checked,escalate:$('f-esc')?.checked,memory:$('f-mem')?.checked,night:$('f-night')?.checked,stage:$('f-stage')?.checked,spam:$('f-spam')?.checked},maxTokens:$('max-tokens')?.value,histLimit:$('hist-limit')?.value,replyDelay:parseInt($('reply-delay')?.value||1500),dynamicDelay:$('dynamic-delay')?.checked||false,formality:parseInt($('formality-slider')?.value??30),typingSpeed:50,updatedAt:Date.now()};
   await window._fb.save('bot_settings',{...data});
   toast('Настройки сохранены в Firebase');
 }
@@ -1432,6 +1676,23 @@ function init(){
   }
 
   if(key) if($('test-status')) $('test-status').textContent = 'Готов к тестированию';
+
+  // Загружаем регуляторы из Firebase
+  try {
+    const settings = await railwayFetch('/api/settings').catch(()=>null);
+    if (settings) {
+      if (settings.replyDelay !== undefined && $('reply-delay')) {
+        $('reply-delay').value = settings.replyDelay;
+        updateDelayLabel();
+      }
+      if (settings.formality !== undefined && $('formality-slider')) {
+        $('formality-slider').value = settings.formality;
+        updateFormalityLabel(settings.formality);
+      }
+      if (settings.dynamicDelay !== undefined && $('dynamic-delay'))
+        $('dynamic-delay').checked = settings.dynamicDelay;
+    }
+  } catch(e) {}
 
   // Обновляем токены через 3 сек
   setTimeout(() => { if(typeof loadTokenStats === 'function') loadTokenStats(); }, 3000);
@@ -1586,15 +1847,11 @@ async function setBalLimit() {
   } catch(e){toast(e.message,'err');}
 }
 
-// Единый обработчик навигации (rules + learning)
-const _goOriginal = window.go;
+// Загрузка при открытии раздела правил
+const _origGoRules = window.go || function(){};
+const _prevGo = window.go;
 window.go = function(name, btn) {
-  _goOriginal(name, btn);
-  if(name === 'learning') {
-    loadFeedbackList();
-    loadFeedbackStats();
-    loadErrorPatterns();
-  }
+  if(_prevGo) _prevGo(name, btn);
   if(name === 'rules') {
     loadRules();
     loadBalanceStats();
@@ -1732,6 +1989,135 @@ function useTemplate(type) {
   if($('con-input')) {
     $('con-input').value = text || '';
     if(text) sendConstructorMsg();
+    else $('con-input').focus();
+  }
+}
+
+let constructorHistory = [];
+
+function conAppendMsg(text, role, extract) {
+  const msgs = $('con-msgs');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.innerHTML = text.replace(/\n/g, '<br>') + `<div class="msg-meta">${now()}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  // Извлекаем промпт если есть
+  if (extract && text.includes('---ПРОМПТ---')) {
+    const match = text.match(/---ПРОМПТ---([\s\S]*?)---КОНЕЦ---/);
+    if (match) {
+      const prompt = match[1].trim();
+      if ($('con-prompt-result')) $('con-prompt-result').value = prompt;
+      toast('✓ Промпт сгенерирован — нажми "Применить к боту"!', 'info');
+      addLog('✓ Конструктор: промпт сгенерирован', 'lfb');
+    }
+  }
+}
+
+async function sendConstructorMsg() {
+  const inp = $('con-input');
+  const msg = inp.value.trim();
+  if (!msg) return;
+  const key = localStorage.getItem('igs_claude_key');
+  if (!key) { toast('Укажи Claude API Key в разделе API ключи', 'warn'); return; }
+
+  inp.value = '';
+  conAppendMsg(msg, 'user', false);
+  constructorHistory.push({ role: 'user', content: msg });
+
+  const typing = document.createElement('div');
+  typing.className = 'msg typing';
+  typing.textContent = 'Claude думает...';
+  $('con-msgs').appendChild(typing);
+  $('con-msgs').scrollTop = 99999;
+  $('con-status').textContent = 'Claude думает...';
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: localStorage.getItem('igs_model') || 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        system: CONSTRUCTOR_SYSTEM,
+        messages: constructorHistory,
+      }),
+    });
+
+    typing.remove();
+    if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message); }
+    const data = await resp.json();
+    const reply = data.content.find(b => b.type === 'text')?.text || '';
+    constructorHistory.push({ role: 'assistant', content: reply });
+    conAppendMsg(reply, 'bot', true);
+    $('con-status').textContent = `${constructorHistory.length} сообщений · готов`;
+  } catch(e) {
+    typing.remove();
+    conAppendMsg('Ошибка: ' + e.message, 'system', false);
+    $('con-status').textContent = 'Ошибка: ' + e.message;
+  }
+}
+
+function clearConstructor() {
+  constructorHistory = [];
+  $('con-msgs').innerHTML = '<div class="msg system">Чат очищен. Опиши своего бота!</div>';
+  if($('con-prompt-result')) $('con-prompt-result').value = '';
+  $('con-status').textContent = 'Опиши своего бота — Claude поможет создать промпт';
+}
+
+function startConstructor() {
+  clearConstructor();
+  $('con-input').value = '';
+  $('con-input').focus();
+}
+
+async function applyConstructorPrompt() {
+  const prompt = $('con-prompt-result')?.value?.trim();
+  if (!prompt) { toast('Сначала сгенерируй промпт в чате', 'warn'); return; }
+
+  // Сохраняем в Firebase
+  if (window._fb) {
+    await window._fb.save('bot_settings', { systemPrompt: prompt, updatedAt: Date.now() });
+  }
+
+  // Применяем на Railway
+  try {
+    await railwayFetch('/api/settings', { method: 'POST', body: JSON.stringify({ systemPrompt: prompt }) });
+    toast('✅ Промпт применён к боту!');
+    addLog('✓ Конструктор: промпт применён к боту', 'lfb');
+    // Синхронизируем с редактором промпта
+    if($('system-prompt')) $('system-prompt').value = prompt;
+  } catch(e) {
+    toast('Firebase обновлён, Railway: ' + e.message, 'warn');
+  }
+}
+
+function copyConstructorPrompt() {
+  const prompt = $('con-prompt-result')?.value;
+  if (!prompt) { toast('Нет промпта для копирования', 'warn'); return; }
+  navigator.clipboard.writeText(prompt).then(() => toast('Скопировано!'));
+}
+
+const TEMPLATES = {
+  restaurant: 'У меня ресторан в Алматы. Бот должен принимать брони столиков, отвечать на вопросы о меню и режиме работы, общаться на русском и казахском.',
+  salon: 'У меня салон красоты. Бот должен записывать клиентов на услуги, рассказывать о ценах, мастерах и акциях.',
+  realty: 'Я риелтор, продаю и сдаю квартиры в Алматы. Бот должен квалифицировать клиентов — покупка или аренда, бюджет, район, и передавать горячих лидов мне.',
+  clinic: 'У меня медицинский центр. Бот записывает на приём к врачам, отвечает на вопросы об услугах и ценах, не даёт медицинских советов.',
+  shop: 'У меня интернет-магазин одежды. Бот помогает подобрать размер, отвечает на вопросы о наличии, доставке и возврате.',
+  custom: 'Расскажи о своём бизнесе подробно...',
+};
+
+function useTemplate(type) {
+  const text = TEMPLATES[type];
+  if ($('con-input')) {
+    $('con-input').value = text;
+    if (type !== 'custom') sendConstructorMsg();
     else $('con-input').focus();
   }
 }
@@ -1904,8 +2290,512 @@ async function previewPrompt() {
   } catch(e) { toast('Railway: '+e.message,'err'); }
 }
 
+
+// ══════════════════════════════════════════════════════════
+// ОТЧЁТНОСТЬ
+// ══════════════════════════════════════════════════════════
+
+// Загружаем Chart.js динамически
+function loadChartJs(cb) {
+  if (window.Chart) { cb(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+  s.onload = cb;
+  document.head.appendChild(s);
+}
+
+let _repData = null;
+let _repChartDays = null;
+let _repChartProducts = null;
+let _repChartTokens = null;
+let _repAllEvents = [];
+
+function setRepPeriod(days) {
+  const to = new Date();
+  const from = new Date(); from.setDate(from.getDate() - (days - 1));
+  const fmt = d => d.toISOString().slice(0, 10);
+  const f = $('rep-from'), t = $('rep-to');
+  if (f) f.value = fmt(from);
+  if (t) t.value = fmt(to);
+  loadReports();
+}
+
+function initRepDates() {
+  const today = new Date().toISOString().slice(0, 10);
+  const from30 = new Date(); from30.setDate(from30.getDate() - 29);
+  const f = $('rep-from'), t = $('rep-to');
+  if (f && !f.value) f.value = from30.toISOString().slice(0, 10);
+  if (t && !t.value) t.value = today;
+}
+
+async function loadReports() {
+  const from = $('rep-from')?.value;
+  const to   = $('rep-to')?.value;
+  if (!from || !to) { toast('Укажи даты', 'warn'); return; }
+
+  try {
+    const data = await railwayFetch(`/api/reports?from=${from}&to=${to}`);
+    _repData = data;
+    renderRepKPI(data);
+    loadChartJs(() => {
+      renderRepChartDays(data);
+      renderRepChartProducts(data);
+      renderRepChartTokens(data);
+      renderLeadsDaysChart(data);
+      renderMeasDaysChart(data);
+      renderShowDaysChart(data);
+      renderMediaChart(data);
+    });
+    renderRepFunnel(data);
+    renderRepTopDialogs(data);
+    renderRepEvents(data);
+    addLog(`↺ Отчёт загружен: ${from} → ${to}`, 'linf');
+  } catch(e) {
+    toast('Railway: ' + e.message, 'err');
+  }
+}
+
+async function loadReportDay() {
+  const today = new Date().toISOString().slice(0, 10);
+  try {
+    const data = await railwayFetch(`/api/reports/${today}`);
+    _repAllEvents = data.events || [];
+    filterRepEvents();
+  } catch(e) {
+    toast(e.message, 'err');
+  }
+}
+
+function switchRepTab(tab) {
+  const tabs = ['main','leads','meas','show','media','conv'];
+  tabs.forEach(t => {
+    const btn = $('rtab-' + t);
+    const panel = $('reptab-' + t);
+    if (btn) btn.className = 'btn ' + (t === tab ? 'btn-p' : 'btn-g') + ' ' + btn.className.split(' ').slice(2).join(' ');
+    if (t === tab) { btn.style.cssText = 'font-size:12px;padding:6px 14px;background:var(--accent);color:#000;border:none;'; }
+    else { btn.style.cssText = 'font-size:12px;padding:6px 14px;'; btn.className = 'btn btn-g'; }
+    if (panel) panel.style.display = t === tab ? '' : 'none';
+  });
+  // Show/hide main charts
+  const mc = $('rep-main-charts');
+  if (mc) mc.style.display = tab === 'main' ? '' : 'none';
+}
+
+function renderRepKPI(data) {
+  const set = (id, val) => { const el = $(id); if (el) el.textContent = val != null ? val : '—'; };
+
+  // Main tab
+  set('rep-msgs-in',   data.totals?.message_in   || 0);
+  set('rep-msgs-out',  data.totals?.message_out  || 0);
+  set('rep-leads',     data.leadsTotal            || 0);
+  set('rep-hot',       (data.leadsHot || 0) + (data.leadsWarm || 0));
+  set('rep-measures',  data.measuresTotal || 0);
+  set('rep-showroom',  data.showroomTotal || 0);
+  set('rep-escalated', data.leadsEscalated || 0);
+  set('rep-followup',  data.followUpSent || 0);
+  set('rep-night',     data.nightTotal || 0);
+  set('rep-refused',   data.refusedTotal || 0);
+  set('rep-photos',    data.photoTotal || 0);
+  const msgs  = data.totals?.message_in || 0;
+  const leads = data.leadsTotal || 0;
+  const conv  = msgs > 0 ? Math.round((leads / msgs) * 100) + '%' : '—';
+  set('rep-conv', conv);
+
+  // Leads tab
+  set('rep2-total', data.leadsTotal || 0);
+  set('rep2-hot',   data.leadsHot   || 0);
+  set('rep2-warm',  data.leadsWarm  || 0);
+  set('rep2-cold',  data.leadsCold  || 0);
+
+  // Measures tab
+  set('rep3-measures', data.measuresTotal || 0);
+  set('rep3-escm',     data.leadsEscalated || 0);
+  const mPct = data.leadsHot > 0 ? Math.round((data.measuresTotal || 0) / data.leadsHot * 100) + '%' : '—';
+  set('rep3-pct', mPct);
+
+  // Showroom tab
+  set('rep4-total', data.showroomTotal || 0);
+  const sPct = leads > 0 ? Math.round((data.showroomTotal || 0) / leads * 100) + '%' : '—';
+  set('rep4-pct', sPct);
+  set('rep4-fu', data.followUpSent || 0);
+
+  // Media tab
+  set('rep5-photos',  data.photoTotal || 0);
+  set('rep5-voice',   data.voiceTotal || 0);
+  set('rep5-night',   data.nightTotal || 0);
+  set('rep5-refused', data.refusedTotal || 0);
+
+  // Render measures list
+  renderMeasuresList(data);
+  // Render showroom list
+  renderShowroomList(data);
+  // Render media chart
+  loadChartJs(() => renderMediaChart(data));
+  // Render leads-by-day chart for leads tab
+  loadChartJs(() => renderLeadsDaysChart(data));
+}
+
+function renderMeasuresList(data) {
+  const el = $('rep-meas-list'); if (!el) return;
+  const events = [];
+  for (const day of (data.days || [])) {
+    for (const ev of (day.events || [])) {
+      if (ev.type === 'lead_saved' && ev.construction) events.push({ ...ev, _day: day.day });
+    }
+  }
+  if (!events.length) { el.innerHTML = '<div style="color:var(--muted);padding:12px;font-size:13px;">Замеров нет за период</div>'; return; }
+  el.innerHTML = events.slice(0, 100).map(ev => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--border);">
+      <div style="width:36px;height:36px;border-radius:9px;background:rgba(96,165,250,.12);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">📐</div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:600;">${ev.construction || 'Конструкция не указана'}</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:2px;">${ev.chatId?.replace('@c.us','') || '—'} · ${fmtTime(ev.ts)}</div>
+      </div>
+      <span class="b ${ev.stage==='горячий'?'b-r':ev.stage==='тёплый'?'b-y':'b-b'}">${ev.stage || '—'}</span>
+    </div>`).join('');
+}
+
+function renderShowroomList(data) {
+  const el = $('rep-show-list'); if (!el) return;
+  const events = [];
+  for (const day of (data.days || [])) {
+    for (const ev of (day.events || [])) {
+      if (ev.type === 'showroom_booked') events.push({ ...ev, _day: day.day });
+    }
+  }
+  if (!events.length) { el.innerHTML = '<div style="color:var(--muted);padding:12px;font-size:13px;">Записей в шоурум нет за период</div>'; return; }
+  el.innerHTML = events.slice(0, 100).map(ev => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--border);">
+      <div style="width:36px;height:36px;border-radius:9px;background:rgba(45,212,191,.12);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🏠</div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:600;">${ev.name || 'Клиент'}</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:2px;">🕐 ${ev.time || '—'} · ${ev.chatId?.replace('@c.us','') || ''}</div>
+        <div style="font-size:11px;color:var(--teal);margin-top:1px;">${fmtTime(ev.ts)}</div>
+      </div>
+      <span class="b b-t">Шоурум</span>
+    </div>`).join('');
+}
+
+function renderMediaChart(data) {
+  const ctx = document.getElementById('rep-chart-media'); if (!ctx) return;
+  if (window._repChartMedia) { window._repChartMedia.destroy(); }
+
+  const allDays = [];
+  const from = new Date($('rep-from').value);
+  const to   = new Date($('rep-to').value);
+  for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
+    allDays.push(d.toISOString().slice(0, 10));
+  }
+  const photos = allDays.map(d => data.days.find(x => x.day === d)?.counters?.image_message || 0);
+  const voice  = allDays.map(d => data.days.find(x => x.day === d)?.counters?.voice_message || 0);
+  const nights = allDays.map(d => data.days.find(x => x.day === d)?.counters?.night_message || 0);
+
+  window._repChartMedia = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: allDays.map(d => d.slice(5)),
+      datasets: [
+        { label: '📸 Фото', data: photos, backgroundColor: 'rgba(96,165,250,0.4)', borderColor: '#60a5fa', borderWidth: 1.5, borderRadius: 4 },
+        { label: '🎙 Голос', data: voice,  backgroundColor: 'rgba(167,139,250,0.4)', borderColor: '#a78bfa', borderWidth: 1.5, borderRadius: 4 },
+        { label: '🌙 Ночные', data: nights, backgroundColor: 'rgba(107,114,128,0.4)', borderColor: '#6b7280', borderWidth: 1.5, borderRadius: 4 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#6b7280', font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: '#6b7280', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { ticks: { color: '#6b7280' }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true },
+      },
+    },
+  });
+}
+
+function renderLeadsDaysChart(data) {
+  const ctx = document.getElementById('rep-chart-leads-days'); if (!ctx) return;
+  if (window._repChartLeadsDays) { window._repChartLeadsDays.destroy(); }
+
+  const allDays = [];
+  const from = new Date($('rep-from').value);
+  const to   = new Date($('rep-to').value);
+  for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
+    allDays.push(d.toISOString().slice(0, 10));
+  }
+  const hot  = allDays.map(d => data.leadsByDay[d]?.hot  || 0);
+  const warm = allDays.map(d => data.leadsByDay[d]?.warm || 0);
+  const cold = allDays.map(d => data.leadsByDay[d]?.cold || 0);
+  const meas = allDays.map(d => data.measureByDay[d]    || 0);
+  const show = allDays.map(d => data.showroomByDay[d]   || 0);
+
+  window._repChartLeadsDays = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: allDays.map(d => d.slice(5)),
+      datasets: [
+        { label: '🔥 Горячих', data: hot,  backgroundColor: 'rgba(239,68,68,0.5)',   borderColor: '#ef4444', borderWidth: 1.5, borderRadius: 4 },
+        { label: '🌡 Тёплых',  data: warm, backgroundColor: 'rgba(245,158,11,0.5)',  borderColor: '#f59e0b', borderWidth: 1.5, borderRadius: 4 },
+        { label: '❄️ Холодных', data: cold, backgroundColor: 'rgba(96,165,250,0.35)', borderColor: '#60a5fa', borderWidth: 1.5, borderRadius: 4 },
+        { label: '📐 Замеры',  data: meas, backgroundColor: 'rgba(45,212,191,0.4)',  borderColor: '#2dd4bf', borderWidth: 1.5, borderRadius: 4 },
+        { label: '🏠 Шоурум',  data: show, backgroundColor: 'rgba(167,139,250,0.4)', borderColor: '#a78bfa', borderWidth: 1.5, borderRadius: 4 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#6b7280', font: { size: 11 } } } },
+      scales: {
+        x: { stacked: false, ticks: { color: '#6b7280', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { ticks: { color: '#6b7280' }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true },
+      },
+    },
+  });
+}
+
+function renderMeasDaysChart(data) {
+  const ctx = document.getElementById('rep-chart-meas-days'); if (!ctx) return;
+  if (window._repChartMeas) { window._repChartMeas.destroy(); }
+  const allDays = [];
+  const from = new Date($('rep-from').value);
+  const to   = new Date($('rep-to').value);
+  for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) allDays.push(d.toISOString().slice(0,10));
+  window._repChartMeas = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: allDays.map(d => d.slice(5)),
+      datasets: [{ label: '📐 Запросов замера', data: allDays.map(d => data.measureByDay[d]||0), backgroundColor: 'rgba(96,165,250,0.4)', borderColor: '#60a5fa', borderWidth: 1.5, borderRadius: 4 }],
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#6b7280', font: { size: 11 } } } }, scales: { x: { ticks: { color: '#6b7280', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { ticks: { color: '#6b7280' }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true } } },
+  });
+}
+
+function renderShowDaysChart(data) {
+  const ctx = document.getElementById('rep-chart-show-days'); if (!ctx) return;
+  if (window._repChartShow) { window._repChartShow.destroy(); }
+  const allDays = [];
+  const from = new Date($('rep-from').value);
+  const to   = new Date($('rep-to').value);
+  for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) allDays.push(d.toISOString().slice(0,10));
+  window._repChartShow = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: allDays.map(d => d.slice(5)),
+      datasets: [{ label: '🏠 Встреч в шоуруме', data: allDays.map(d => data.showroomByDay[d]||0), backgroundColor: 'rgba(45,212,191,0.4)', borderColor: '#2dd4bf', borderWidth: 1.5, borderRadius: 4 }],
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#6b7280', font: { size: 11 } } } }, scales: { x: { ticks: { color: '#6b7280', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { ticks: { color: '#6b7280' }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true } } },
+  });
+}
+
+function renderRepChartDays(data) {
+  const ctx = document.getElementById('rep-chart-days');
+  if (!ctx) return;
+  if (_repChartDays) { _repChartDays.destroy(); _repChartDays = null; }
+
+  const allDays = [];
+  const from = new Date($('rep-from').value);
+  const to   = new Date($('rep-to').value);
+  for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
+    allDays.push(d.toISOString().slice(0, 10));
+  }
+
+  const msgs   = allDays.map(d => data.days.find(x => x.day === d)?.counters?.message_in || 0);
+  const leads  = allDays.map(d => (data.leadsByDay[d]?.total) || 0);
+
+  _repChartDays = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: allDays.map(d => d.slice(5)),
+      datasets: [
+        { label: 'Сообщения', data: msgs, backgroundColor: 'rgba(37,211,102,0.35)', borderColor: '#25d366', borderWidth: 1.5, borderRadius: 4 },
+        { label: 'Лиды', data: leads, backgroundColor: 'rgba(239,68,68,0.35)', borderColor: '#ef4444', borderWidth: 1.5, borderRadius: 4 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#6b7280', font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: '#6b7280', font: { size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { ticks: { color: '#6b7280', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true },
+      },
+    },
+  });
+}
+
+function renderRepChartProducts(data) {
+  const ctx = document.getElementById('rep-chart-products');
+  if (!ctx) return;
+  if (_repChartProducts) { _repChartProducts.destroy(); _repChartProducts = null; }
+
+  const entries = Object.entries(data.byConstruction || {}).sort((a,b) => b[1] - a[1]).slice(0, 8);
+  if (!entries.length) return;
+
+  const colors = ['#25d366','#60a5fa','#f59e0b','#ef4444','#a78bfa','#2dd4bf','#fb923c','#e879f9'];
+  _repChartProducts = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: entries.map(([k]) => k.length > 20 ? k.slice(0, 18) + '…' : k),
+      datasets: [{ data: entries.map(([,v]) => v), backgroundColor: colors, borderWidth: 0 }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { color: '#6b7280', font: { size: 11 }, boxWidth: 12 } },
+      },
+    },
+  });
+}
+
+function renderRepChartTokens(data) {
+  const ctx = document.getElementById('rep-chart-tokens');
+  if (!ctx) return;
+  if (_repChartTokens) { _repChartTokens.destroy(); _repChartTokens = null; }
+
+  const tokenByDay = data.tokenByDay || {};
+  const days = Object.keys(tokenByDay).sort();
+  if (!days.length) return;
+
+  const inp = days.map(d => tokenByDay[d]?.input_tokens || 0);
+  const out = days.map(d => tokenByDay[d]?.output_tokens || 0);
+
+  _repChartTokens = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: days.map(d => d.slice(5)),
+      datasets: [
+        { label: 'Input', data: inp, borderColor: '#60a5fa', backgroundColor: 'rgba(96,165,250,0.1)', tension: 0.3, fill: true, pointRadius: 3 },
+        { label: 'Output', data: out, borderColor: '#a78bfa', backgroundColor: 'rgba(167,139,250,0.1)', tension: 0.3, fill: true, pointRadius: 3 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#6b7280', font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: '#6b7280', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { ticks: { color: '#6b7280', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true },
+      },
+    },
+  });
+}
+
+function renderRepFunnel(data) {
+  const el = $('rep-funnel'); if (!el) return;
+  const total = data.leadsTotal || 1;
+  const stages = [
+    { label: 'Всего лидов',        val: data.leadsTotal || 0,     color: '#60a5fa', pct: 100 },
+    { label: '🔥 Горячих',         val: data.leadsHot || 0,       color: '#ef4444', pct: Math.round(((data.leadsHot||0)/total)*100) },
+    { label: '🌡 Тёплых',          val: data.leadsWarm || 0,      color: '#f59e0b', pct: Math.round(((data.leadsWarm||0)/total)*100) },
+    { label: '❄️ Холодных',        val: data.leadsCold || 0,      color: '#6b7280', pct: Math.round(((data.leadsCold||0)/total)*100) },
+    { label: '📞 Передано менеджеру', val: data.leadsEscalated||0, color: '#f59e0b', pct: Math.round(((data.leadsEscalated||0)/total)*100) },
+    { label: '🏠 Шоурум записей',  val: data.totals?.showroom_booked||0, color: '#2dd4bf', pct: Math.round(((data.totals?.showroom_booked||0)/total)*100) },
+  ];
+  el.innerHTML = stages.map(s => `
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;">
+        <span style="color:var(--text)">${s.label}</span>
+        <span style="font-weight:700;color:${s.color}">${s.val} <span style="font-weight:400;color:var(--muted)">(${s.pct}%)</span></span>
+      </div>
+      <div style="height:7px;background:var(--bg3);border-radius:4px;overflow:hidden;">
+        <div style="height:100%;width:${s.pct}%;background:${s.color};border-radius:4px;transition:width .4s;"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderRepTopDialogs(data) {
+  const tbody = document.querySelector('#rep-top-dialogs tbody');
+  if (!tbody) return;
+  const dialogs = data.topDialogs || [];
+  if (!dialogs.length) { tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:20px;">Нет данных</td></tr>'; return; }
+  tbody.innerHTML = dialogs.map((d, i) => `
+    <tr>
+      <td style="color:var(--muted)">${i+1}</td>
+      <td class="lp">${d.name}</td>
+      <td style="font-weight:700;">${d.messageCount}</td>
+      <td style="color:var(--muted);font-size:11.5px;">${fmtTime(d.lastActivity)}</td>
+      <td><span class="b ${d.stage === 'горячий' ? 'b-r' : d.stage === 'тёплый' ? 'b-y' : 'b-b'}">${d.stage || 'активный'}</span></td>
+    </tr>
+  `).join('');
+}
+
+function renderRepEvents(data) {
+  _repAllEvents = [];
+  for (const day of (data.days || [])) {
+    for (const ev of (day.events || [])) {
+      _repAllEvents.push({ ...ev, _day: day.day });
+    }
+  }
+  _repAllEvents.sort((a, b) => b.ts - a.ts);
+  filterRepEvents();
+}
+
+function filterRepEvents() {
+  const filter = $('rep-event-filter')?.value || '';
+  const el = $('rep-events-list'); if (!el) return;
+
+  const filtered = filter ? _repAllEvents.filter(e => e.type === filter) : _repAllEvents;
+  const show = filtered.slice(0, 200);
+
+  if (!show.length) {
+    el.innerHTML = '<div style="color:var(--muted);padding:12px 0;">Событий нет</div>';
+    return;
+  }
+
+  const TYPE_ICON = {
+    message_in:     { icon: '↓', cls: 'linf',  label: 'Входящее' },
+    message_out:    { icon: '↑', cls: 'lok',   label: 'Ответ' },
+    lead_saved:     { icon: '★', cls: 'lwarn', label: 'Лид' },
+    escalated:      { icon: '!', cls: 'lerr',  label: 'Эскалация' },
+    showroom_booked:{ icon: '🏠', cls: 'lfb',  label: 'Шоурум' },
+  };
+
+  el.innerHTML = show.map(ev => {
+    const cfg = TYPE_ICON[ev.type] || { icon: '·', cls: 'lt2', label: ev.type };
+    const time = new Date(ev.ts).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const date = new Date(ev.ts).toLocaleDateString('ru', { day: '2-digit', month: '2-digit' });
+    const extra = ev.stage ? ` · <span style="color:${ev.stage==='горячий'?'#ef4444':ev.stage==='тёплый'?'#f59e0b':'#6b7280'}">${ev.stage}</span>` : '';
+    const tokens = ev.tokens_in ? ` · <span style="color:var(--muted)">${ev.tokens_in}in/${ev.tokens_out}out</span>` : '';
+    const phone  = ev.chatId ? ` <span style="color:var(--muted)">${ev.chatId.replace('@c.us','')}</span>` : '';
+    const product = ev.construction ? ` <span style="color:var(--purple)">${ev.construction}</span>` : '';
+    return `<span class="ll"><span class="lt2">${date} ${time}</span> <span class="${cfg.cls}">[${cfg.label}]</span>${phone}${product}${extra}${tokens}</span>`;
+  }).join('');
+}
+
+function exportReportCSV() {
+  if (!_repData) { toast('Сначала загрузи отчёт', 'warn'); return; }
+  const rows = [['День', 'Входящих', 'Ответов', 'Лиды всего', 'Горячих', 'Тёплых', 'Холодных', 'Эскалаций', 'Шоурум']];
+  const allDays = [];
+  const from = new Date($('rep-from').value);
+  const to   = new Date($('rep-to').value);
+  for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
+    allDays.push(d.toISOString().slice(0, 10));
+  }
+  for (const day of allDays) {
+    const dc = _repData.days.find(x => x.day === day)?.counters || {};
+    const lc = _repData.leadsByDay[day] || {};
+    rows.push([day, dc.message_in||0, dc.message_out||0, lc.total||0, lc.hot||0, lc.warm||0, lc.cold||0, lc.escalated||0, lc.showroom||0]);
+  }
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url;
+  a.download = `igs-bot-report-${$('rep-from').value}-${$('rep-to').value}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('CSV скачан', 'info');
+}
+
+// Hook into go() to load reports when tab opens
 // Загружаем данные при открытии раздела обучения
-// (объединено с go из rules — см. ниже единый window.go)
+const _origGo = go;
+window.go = function(name, btn) {
+  _origGo(name, btn);
+  if (name === 'learning') {
+    loadFeedbackList();
+    loadFeedbackStats();
+    loadErrorPatterns();
+  }
+  if (name === 'reports') {
+    initRepDates();
+    loadReports();
+  }
+};
 
 // Кнопка оценки в разделе диалогов — устанавливаем chatId автоматически
 function openDialogWithFeedback(chatId, el) {

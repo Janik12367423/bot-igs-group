@@ -660,41 +660,166 @@ window._fb={
 
 <!-- ══ KEYS ══ -->
 <div class="page" id="page-keys">
-  <div class="ph"><div class="ph-title">API ключи</div><div class="ph-sub">Ключи для тестового чата · Railway URL для управления ботом</div></div>
+  <div class="ph"><div class="ph-title">API ключи</div><div class="ph-sub">Все ключи отправляются на VPS и действуют мгновенно · при перезапуске нужно также прописать в .env файле</div></div>
+
+  <!-- Статус всех ключей -->
+  <div class="card" style="margin-bottom:14px;">
+    <div class="ct" style="justify-content:space-between;margin-bottom:14px;">
+      <span>Статус ключей на сервере</span>
+      <button class="btn btn-g" style="padding:4px 11px;font-size:12px;" onclick="loadEnvStatus()">Проверить</button>
+    </div>
+    <div id="env-status-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+      <div style="color:var(--muted);font-size:12px;">Нажми "Проверить" чтобы увидеть статус ключей</div>
+    </div>
+  </div>
+
+  <!-- VPS URL -->
   <div class="card">
-    <div class="ct">VPS Backend (твой сервер)</div>
+    <div class="ct">🖥 VPS сервер</div>
     <div class="field">
-      <label>URL твоего VPS</label>
+      <label>URL сервера</label>
       <input type="text" class="mono" id="railway-url" placeholder="http://45.136.58.180:3001" oninput="saveRailwayUrl()">
-      <div class="fhint">Адрес твоего VPS сервера — дашборд управляет ботом через него. Пример: http://45.136.58.180:3001</div>
+      <div class="fhint">IP адрес твоего VPS и порт. Пример: http://45.136.58.180:3001</div>
     </div>
     <div class="brow"><button class="btn btn-teal" onclick="checkRailway()">Проверить соединение</button></div>
   </div>
+
+  <!-- Claude -->
   <div class="card">
-    <div class="ct">Claude API Key (для тестового чата)</div>
+    <div class="ct" style="gap:8px;">
+      <span style="width:24px;height:24px;border-radius:6px;background:rgba(167,139,250,0.15);display:flex;align-items:center;justify-content:center;font-size:13px;">🤖</span>
+      Claude API Key
+      <span id="st-CLAUDE_API_KEY" class="b b-r" style="margin-left:auto;font-size:10px;">✗ не задан</span>
+    </div>
     <div class="field">
       <label>Claude API Key</label>
+      <input type="password" class="mono" id="k-claude" placeholder="sk-ant-api03-...">
+      <div class="fhint">console.anthropic.com → API Keys. Используется для ответов клиентам (фолбэк) и анализа фото.</div>
+    </div>
+  </div>
+
+  <!-- Gemini -->
+  <div class="card">
+    <div class="ct" style="gap:8px;">
+      <span style="width:24px;height:24px;border-radius:6px;background:rgba(37,211,102,0.15);display:flex;align-items:center;justify-content:center;font-size:13px;">⚡</span>
+      Gemini API Key
+      <span id="st-GEMINI_API_KEY" class="b b-r" style="margin-left:auto;font-size:10px;">✗ не задан</span>
+    </div>
+    <div class="field">
+      <label>Gemini API Key</label>
+      <input type="password" class="mono" id="k-gemini" placeholder="AIzaSy...">
+      <div class="fhint">aistudio.google.com → Get API Key. Используется для: чат-бот (Flash) + судьи (Flash-Lite) + визуализация фото (Nano Banana Pro).</div>
+    </div>
+  </div>
+
+  <!-- OpenAI -->
+  <div class="card">
+    <div class="ct" style="gap:8px;">
+      <span style="width:24px;height:24px;border-radius:6px;background:rgba(96,165,250,0.15);display:flex;align-items:center;justify-content:center;font-size:13px;">🎙</span>
+      OpenAI API Key
+      <span id="st-OPENAI_API_KEY" class="b b-r" style="margin-left:auto;font-size:10px;">✗ не задан</span>
+    </div>
+    <div class="field">
+      <label>OpenAI API Key</label>
+      <input type="password" class="mono" id="k-openai" placeholder="sk-...">
+      <div class="fhint">platform.openai.com → API Keys. Используется для: Whisper (расшифровка голосовых) + gpt-image-1 (фолбэк визуализации).</div>
+    </div>
+  </div>
+
+  <!-- Telegram -->
+  <div class="card">
+    <div class="ct" style="gap:8px;">
+      <span style="width:24px;height:24px;border-radius:6px;background:rgba(96,165,250,0.15);display:flex;align-items:center;justify-content:center;font-size:13px;">✈️</span>
+      Telegram
+      <span id="st-TELEGRAM_BOT_TOKEN" class="b b-r" style="margin-left:auto;font-size:10px;">✗ не задан</span>
+    </div>
+    <div class="frow">
+      <div class="field">
+        <label>Bot Token</label>
+        <input type="password" class="mono" id="k-tg-token" placeholder="1234567890:AAF...">
+        <div class="fhint">@BotFather → /newbot → получишь токен</div>
+      </div>
+      <div class="field">
+        <label>Chat ID (твой)</label>
+        <input type="text" class="mono" id="k-tg-chat" placeholder="123456789">
+        <div class="fhint">Напиши @userinfobot — он скажет твой ID</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Уведомления боссу -->
+  <div class="card">
+    <div class="ct">👔 Уведомления руководителю</div>
+    <div class="frow">
+      <div class="field">
+        <label>Телефон руководителя</label>
+        <input type="text" class="mono" id="k-boss-phone" placeholder="87017987416">
+        <div class="fhint">Номер без @c.us — бот добавит сам. Уведомления в WhatsApp при горячем лиде.</div>
+      </div>
+      <div class="field">
+        <label>Email руководителя</label>
+        <input type="text" class="mono" id="k-boss-email" placeholder="boss@gmail.com">
+        <div class="fhint">Email для уведомлений о горячих лидах с детальным отчётом судей.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gmail для отправки email -->
+  <div class="card">
+    <div class="ct">📧 Gmail (для отправки email уведомлений)</div>
+    <div class="frow">
+      <div class="field">
+        <label>Gmail адрес</label>
+        <input type="text" class="mono" id="k-gmail-user" placeholder="your@gmail.com">
+        <div class="fhint">С этого адреса будут отправляться email о горячих лидах.</div>
+      </div>
+      <div class="field">
+        <label>App Password</label>
+        <input type="password" class="mono" id="k-gmail-pass" placeholder="xxxx xxxx xxxx xxxx">
+        <div class="fhint">myaccount.google.com → Безопасность → Пароли приложений → создать для "Почта"</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Кнопки сохранения -->
+  <div class="card" style="background:rgba(37,211,102,0.05);border-color:rgba(37,211,102,0.2);">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:14px;">
+      ⚡ Ключи сразу применяются на сервере. Заполни только те что хочешь изменить — пустые поля пропускаются.
+    </div>
+    <div class="brow">
+      <button class="btn btn-p" onclick="saveAllKeys()" style="flex:1;justify-content:center;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+        Сохранить все ключи на сервер
+      </button>
+      <button class="btn btn-teal" onclick="testAllKeys()">Проверить ключи</button>
+    </div>
+    <div id="keys-result" style="margin-top:12px;display:none;"></div>
+  </div>
+
+  <!-- Для тестового чата (локально) -->
+  <div class="card">
+    <div class="ct">🧪 Для тестового чата (только локально в браузере)</div>
+    <div class="field">
+      <label>Claude API Key для теста</label>
       <input type="password" class="mono" id="claude-key-local" placeholder="sk-ant-api03-...">
-      <div class="fhint">Хранится только в браузере · используется только для тестового чата</div>
+      <div class="fhint">Хранится только в браузере — не отправляется на сервер. Нужен только для тестового чата в дашборде.</div>
     </div>
     <div class="field">
       <label>Модель</label>
       <select id="claude-model-local">
-        <option value="claude-sonnet-4-20250514" selected>Claude Sonnet 4 — рекомендуется</option>
-        <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 — быстрее/дешевле</option>
+        <option value="claude-sonnet-4-20250514" selected>Claude Sonnet 4</option>
+        <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
       </select>
     </div>
     <div class="brow">
-      <button class="btn btn-p" onclick="saveLocalKeys()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>Сохранить локально</button>
-      <button class="btn btn-teal" onclick="testClaudeKey()">Проверить Claude</button>
-    </div>
-    <div style="margin-top:12px;background:rgba(37,211,102,.08);border:1px solid rgba(37,211,102,.2);border-radius:var(--radius-sm);padding:11px 13px;font-size:12.5px;color:var(--accent);">
-      Реальные API ключи (Claude, OpenAI, Telegram, Firebase) вставляются в Railway Variables — не сюда. Здесь только для тестового чата.
+      <button class="btn btn-g" onclick="saveLocalKeys()">Сохранить локально</button>
+      <button class="btn btn-teal" onclick="testClaudeKey()">Тест Claude</button>
+      <span id="test-status" style="font-size:12px;color:var(--muted);align-self:center;"></span>
     </div>
   </div>
 </div>
 
-<!-- ══ FEATURES ══ -->
+<!-- ══ FEATURES ══ --><!-- ══ FEATURES ══ -->
 <div class="page" id="page-features">
   <div class="ph"><div class="ph-title">Возможности</div><div class="ph-sub">Сохраняются в Firebase · Railway читает при каждом сообщении</div></div>
   <div class="card">
@@ -717,40 +842,19 @@ window._fb={
     <div class="frow">
       <div class="field">
         <label>Задержка ответа (мс)</label>
-        <input type="number" value="1500" id="reply-delay" min="0" max="15000" oninput="updateDelayLabel()">
-        <div class="fhint" id="delay-hint">Пауза 1.5 сек перед ответом — выглядит естественно</div>
+        <input type="number" value="1500" id="reply-delay" min="0" max="10000">
+        <div class="fhint">Минимальная пауза перед ответом. 1500 = 1.5 секунды. 0 = мгновенно</div>
       </div>
       <div class="field">
         <label style="display:flex;align-items:center;gap:8px;">
           <input type="checkbox" id="dynamic-delay">
           Динамическая задержка (имитация набора текста)
         </label>
-        <div class="fhint">+50мс на каждый символ ответа, макс. 8 сек — бот "печатает" как живой человек</div>
+        <div class="fhint">Бот будет "печатать" дольше для длинных сообщений — выглядит как живой человек. Дополнительно +50мс на каждый символ (макс. 8 сек)</div>
       </div>
       <div class="field"><label>Антиспам порог (мс)</label><input type="text" value="2000" id="spam-ms"></div>
     </div>
-    <div class="divider"></div>
-    <div class="ct">🎩 Тональность и официальность</div>
-    <div class="field">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <label style="margin:0;">Уровень официальности</label>
-        <span style="font-size:13px;font-weight:700;color:var(--accent);" id="formality-val">30%</span>
-      </div>
-      <input type="range" id="formality-slider" min="0" max="100" value="30" step="5"
-        oninput="updateFormalityLabel(this.value)"
-        style="width:100%;accent-color:var(--accent);cursor:pointer;">
-      <div style="margin-top:8px;padding:10px 13px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--accent);">
-        <div style="font-size:13px;font-weight:600;color:var(--text);" id="formality-label">Дружелюбный</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:3px;" id="formality-desc">Тёплый, живой стиль — хороший менеджер в WhatsApp</div>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:6px;padding:0 2px;">
-        <span>😊 Неформально</span><span>🤝 Дружелюбно</span><span>💼 Официально</span><span>🎩 Строго</span>
-      </div>
-    </div>
-    <div class="brow">
-      <button class="btn btn-p" onclick="saveFeatures()">Сохранить</button>
-      <button class="btn btn-g" onclick="saveFormalityOnly()">Применить тональность →</button>
-    </div>
+    <div class="brow"><button class="btn btn-p" onclick="saveFeatures()">Сохранить</button></div>
   </div>
 </div>
 
@@ -1567,49 +1671,9 @@ async function pushPromptToRailway(){
   } catch(e){toast('Firebase обновлён, Railway: '+e.message,'warn');}
 }
 
-// ── Задержка — подсказка ──────────────────────────────────────────────────────
-function updateDelayLabel() {
-  const v = parseInt($('reply-delay')?.value || 1500);
-  const el = $('delay-hint');
-  if (!el) return;
-  if (v === 0) el.textContent = 'Мгновенный ответ — выглядит как бот';
-  else if (v < 500) el.textContent = `Пауза ${v}мс — очень быстро`;
-  else if (v < 2000) el.textContent = `Пауза ${(v/1000).toFixed(1)} сек — естественно`;
-  else if (v < 5000) el.textContent = `Пауза ${(v/1000).toFixed(1)} сек — медленнее, как реальный человек`;
-  else el.textContent = `Пауза ${(v/1000).toFixed(1)} сек — очень медленно`;
-}
-
-// ── Официальность — регулятор ─────────────────────────────────────────────────
-const FORMALITY_LEVELS = [
-  { max:  20, label: 'Неформальный',       desc: '"Привет! Расскажи что хочешь сделать 😊" — как друг', color: '#25d366' },
-  { max:  40, label: 'Дружелюбный',        desc: 'Тёплый, живой стиль — хороший менеджер в WhatsApp', color: '#25d366' },
-  { max:  60, label: 'Сбалансированный',   desc: 'Вежливо, тепло, профессионально — стандарт WhatsApp', color: '#60a5fa' },
-  { max:  80, label: 'Официально-вежливый',desc: 'Строгое "Вы", деловой стиль, минимум эмодзи', color: '#f59e0b' },
-  { max: 100, label: 'Строго официальный', desc: 'Деловые письма, никаких эмодзи, максимальный формализм', color: '#ef4444' },
-];
-
-function updateFormalityLabel(val) {
-  val = parseInt(val);
-  if ($('formality-val')) $('formality-val').textContent = val + '%';
-  const level = FORMALITY_LEVELS.find(l => val <= l.max) || FORMALITY_LEVELS[4];
-  if ($('formality-label')) { $('formality-label').textContent = level.label; $('formality-label').style.color = level.color; }
-  if ($('formality-desc'))  $('formality-desc').textContent = level.desc;
-  // Красим слайдер
-  const slider = $('formality-slider');
-  if (slider) slider.style.accentColor = level.color;
-}
-
-async function saveFormalityOnly() {
-  const val = parseInt($('formality-slider')?.value ?? 30);
-  try {
-    await railwayFetch('/api/settings', { method:'POST', body: JSON.stringify({ formality: val }) });
-    toast(`✓ Тональность применена: ${FORMALITY_LEVELS.find(l=>val<=l.max)?.label || val+'%'}`);
-  } catch(e) { toast('Ошибка применения', 'err'); }
-}
-
 async function saveFeatures(){
   if(!window._fb){toast('Firebase не подключён','err');return;}
-  const data={features:{voice:$('f-voice')?.checked,photo:$('f-photo')?.checked,escalate:$('f-esc')?.checked,memory:$('f-mem')?.checked,night:$('f-night')?.checked,stage:$('f-stage')?.checked,spam:$('f-spam')?.checked},maxTokens:$('max-tokens')?.value,histLimit:$('hist-limit')?.value,replyDelay:parseInt($('reply-delay')?.value||1500),dynamicDelay:$('dynamic-delay')?.checked||false,formality:parseInt($('formality-slider')?.value??30),typingSpeed:50,updatedAt:Date.now()};
+  const data={features:{voice:$('f-voice')?.checked,photo:$('f-photo')?.checked,escalate:$('f-esc')?.checked,memory:$('f-mem')?.checked,night:$('f-night')?.checked,stage:$('f-stage')?.checked,spam:$('f-spam')?.checked},maxTokens:$('max-tokens')?.value,histLimit:$('hist-limit')?.value,replyDelay:$('reply-delay')?.value,dynamicDelay:$('dynamic-delay')?.checked||false,typingSpeed:50,updatedAt:Date.now()};
   await window._fb.save('bot_settings',{...data});
   toast('Настройки сохранены в Firebase');
 }
@@ -1676,23 +1740,6 @@ function init(){
   }
 
   if(key) if($('test-status')) $('test-status').textContent = 'Готов к тестированию';
-
-  // Загружаем регуляторы из Firebase
-  try {
-    const settings = await railwayFetch('/api/settings').catch(()=>null);
-    if (settings) {
-      if (settings.replyDelay !== undefined && $('reply-delay')) {
-        $('reply-delay').value = settings.replyDelay;
-        updateDelayLabel();
-      }
-      if (settings.formality !== undefined && $('formality-slider')) {
-        $('formality-slider').value = settings.formality;
-        updateFormalityLabel(settings.formality);
-      }
-      if (settings.dynamicDelay !== undefined && $('dynamic-delay'))
-        $('dynamic-delay').checked = settings.dynamicDelay;
-    }
-  } catch(e) {}
 
   // Обновляем токены через 3 сек
   setTimeout(() => { if(typeof loadTokenStats === 'function') loadTokenStats(); }, 3000);
@@ -2801,6 +2848,103 @@ window.go = function(name, btn) {
 function openDialogWithFeedback(chatId, el) {
   openDialog(chatId, el);
   if($('fb-chatid')) $('fb-chatid').value = chatId;
+}
+
+// ── API ключи — загрузка и сохранение ────────────────────────────────────────
+async function loadEnvStatus() {
+  try {
+    const status = await railwayFetch('/api/env-status');
+    if (!status) { toast('VPS недоступен', 'warn'); return; }
+    const grid = $('env-status-grid');
+    if (!grid) return;
+    const labels = {
+      CLAUDE_API_KEY:     'Claude',
+      OPENAI_API_KEY:     'OpenAI',
+      GEMINI_API_KEY:     'Gemini',
+      TELEGRAM_BOT_TOKEN: 'Telegram Token',
+      TELEGRAM_CHAT_ID:   'Telegram Chat ID',
+      FIREBASE_PROJECT_ID:'Firebase Project',
+      FIREBASE_URL:       'Firebase URL',
+      BOSS_PHONE:         'Телефон босса',
+      BOSS_EMAIL:         'Email босса',
+      GMAIL_APP_PASSWORD: 'Gmail пароль',
+    };
+    grid.innerHTML = Object.entries(status).map(([k, v]) => {
+      const ok = v === '✓';
+      // Обновляем бейджи в карточках
+      const badge = $(('st-'+k));
+      if (badge) {
+        badge.textContent = ok ? '✓ задан' : '✗ не задан';
+        badge.className = 'b ' + (ok ? 'b-g' : 'b-r');
+      }
+      return `<div style="display:flex;align-items:center;gap:7px;background:var(--bg3);border-radius:8px;padding:8px 11px;">
+        <span style="color:${ok?'var(--accent)':'var(--danger)'};font-size:14px;font-weight:700;">${v}</span>
+        <span style="font-size:11.5px;color:${ok?'var(--text)':'var(--muted)'};">${labels[k]||k}</span>
+      </div>`;
+    }).join('');
+  } catch(e) { toast('Ошибка: '+e.message, 'err'); }
+}
+
+async function saveAllKeys() {
+  const body = {};
+  const map = {
+    'k-claude':     'CLAUDE_API_KEY',
+    'k-gemini':     'GEMINI_API_KEY',
+    'k-openai':     'OPENAI_API_KEY',
+    'k-tg-token':   'TELEGRAM_BOT_TOKEN',
+    'k-tg-chat':    'TELEGRAM_CHAT_ID',
+    'k-boss-phone': 'BOSS_PHONE',
+    'k-boss-email': 'BOSS_EMAIL',
+    'k-gmail-user': 'GMAIL_USER',
+    'k-gmail-pass': 'GMAIL_APP_PASSWORD',
+  };
+  for (const [id, key] of Object.entries(map)) {
+    const val = $(id)?.value?.trim();
+    if (val) body[key] = val;
+  }
+  if (Object.keys(body).length === 0) {
+    toast('Заполни хотя бы один ключ', 'warn');
+    return;
+  }
+  try {
+    const data = await railwayFetch('/api/env-keys', { method:'POST', body: JSON.stringify(body) });
+    if (!data) { toast('Ошибка сохранения', 'err'); return; }
+    const res = $('keys-result');
+    if (res) {
+      res.style.display = 'block';
+      res.innerHTML = `<div style="background:var(--accent-glow);border:1px solid rgba(37,211,102,0.3);border-radius:8px;padding:10px 13px;font-size:12.5px;color:var(--accent);">
+        ✓ Сохранено: ${data.updated?.join(', ')||''}
+      </div>`;
+    }
+    toast(`✓ Сохранено ${data.updated?.length||0} ключей`);
+    // Очищаем поля
+    for (const id of Object.keys(map)) {
+      const el = $(id);
+      if (el) el.value = '';
+    }
+    addLog(`✓ API ключи обновлены: ${data.updated?.join(', ')||''}`, 'lok');
+    // Обновляем статусы
+    setTimeout(loadEnvStatus, 500);
+  } catch(e) { toast('Ошибка: '+e.message, 'err'); }
+}
+
+async function testAllKeys() {
+  try {
+    const data = await railwayFetch('/api/test-keys');
+    if (!data) { toast('VPS недоступен', 'warn'); return; }
+    const res = $('keys-result');
+    if (res) {
+      res.style.display = 'block';
+      res.innerHTML = Object.entries(data).map(([k, v]) => {
+        const ok = v === 'ok' || v?.startsWith('ok');
+        return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
+          <span style="color:${ok?'var(--accent)':'var(--danger)'};font-size:16px;">${ok?'✓':'✗'}</span>
+          <span style="font-size:13px;font-weight:600;color:var(--text);min-width:100px;">${k}</span>
+          <span style="font-size:12px;color:${ok?'var(--muted)':'var(--danger)'};">${v}</span>
+        </div>`;
+      }).join('');
+    }
+  } catch(e) { toast('Ошибка: '+e.message, 'err'); }
 }
 
 init();
